@@ -1,0 +1,35 @@
+name: HideNSeek
+version: '${version}'
+main: me.antigravity.hidenseek.HideNSeek
+api-version: '1.21'
+description: Premium Hide and Seek Infection PaperMC Plugin.
+author: Antigravity
+
+commands:
+  hns:
+    description: HideNSeek command interface.
+    permission: hns.join
+    usage: /hns [subcommand]
+
+permissions:
+  hns.admin:
+    description: Allows full administrative access.
+    default: op
+  hns.setup:
+    description: Allows setting up arenas, spawns, and configurations.
+    default: op
+  hns.start:
+    description: Allows starting matches manually.
+    default: op
+  hns.stop:
+    description: Allows stopping matches manually.
+    default: op
+  hns.reload:
+    description: Allows reloading configuration files.
+    default: op
+  hns.join:
+    description: Allows joining games.
+    default: true
+  hns.bypass:
+    description: Allows bypassing arena boundaries and build/break rules.
+    default: op

@@ -1,0 +1,78 @@
+# HideNSeek Configuration File
+
+game-settings:
+  min-players: 2
+  max-players: 20
+  countdown-seconds: 10
+  match-timer-seconds: 300
+  blindness-duration-seconds: 30
+  hider-scale: 0.3
+
+bazooka-settings:
+  item:
+    material: "BLAZE_ROD"
+    name: "&e&lBazooka Rocket Launcher"
+    lore:
+      - "&7Right-click to fire a destructive rocket!"
+      - "&7Ammo: &a%ammo%&7/&a%max_ammo%"
+      - "&7Cooldown: &c%cooldown%s"
+  cooldown-seconds: 3.0
+  max-ammo: 10
+  explosion-radius: 4.0
+  damage: 8.0
+
+lobby-items:
+  join-selector:
+    material: "NETHER_STAR"
+    name: "&a&lJoin Game &7(Right Click)"
+    lore:
+      - "&7Right-click to view and join active arenas."
+  leave-lobby:
+    material: "BARRIER"
+    name: "&c&lLeave Lobby &7(Right Click)"
+    lore:
+      - "&7Right-click to leave the game."
+
+sounds:
+  countdown:
+    sound: "BLOCK_NOTE_BLOCK_PLING"
+    volume: 1.0
+    pitch: 1.0
+  game-start:
+    sound: "ENTITY_WITHER_SPAWN"
+    volume: 1.0
+    pitch: 1.0
+  player-found:
+    sound: "ENTITY_LIGHTNING_BOLT_THUNDER"
+    volume: 0.8
+    pitch: 1.2
+  game-end:
+    sound: "ENTITY_ENDER_DRAGON_GROWL"
+    volume: 1.0
+    pitch: 1.0
+  victory:
+    sound: "UI_TOAST_CHALLENGE_COMPLETE"
+    volume: 1.0
+    pitch: 1.0
+  defeat:
+    sound: "ENTITY_WITHER_DEATH"
+    volume: 1.0
+    pitch: 0.8
+
+scoreboard:
+  title: "&6&lHide &f&lN &6&lSeek"
+  lines:
+    - "&7---------------------"
+    - "&eArena: &f%arena%"
+    - "&eTime Left: &a%time%"
+    - "&7---------------------"
+    - "&cSeekers: &f%seekers_count%"
+    - "&aHiders: &f%hiders_count%"
+    - "&7---------------------"
+    - "&ePlayers: &f%players_count%&7/&f%max_players%"
+    - "&7---------------------"
+
+bossbar:
+  title: "&6Match Time Remaining: &e%time%"
+  color: "RED" # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  style: "PROGRESS" # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
