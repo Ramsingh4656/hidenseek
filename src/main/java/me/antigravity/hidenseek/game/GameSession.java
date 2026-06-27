@@ -168,9 +168,10 @@ public class GameSession {
 
         // Teleport to global lobby
         Location lobby = plugin.getArenaManager().getGlobalLobby();
-        if (lobby != null) {
-            player.teleport(lobby);
+        if (lobby == null) {
+            lobby = player.getWorld().getSpawnLocation();
         }
+        player.teleport(lobby);
 
         String leaveMsg = plugin.getConfigManager().getMessage("game.leave", true)
                 .replace("%player%", player.getName())
@@ -178,7 +179,7 @@ public class GameSession {
                 .replace("%max%", String.valueOf(arena.getMaxPlayers()));
         broadcastMessage(leaveMsg);
 
-        MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("errors.not-in-game", true));
+        MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("game.leave-success", true));
 
         // Check if game has enough players left
         if (arena.getState() == ArenaState.STARTING && players.size() < arena.getMinPlayers()) {

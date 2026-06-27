@@ -93,21 +93,21 @@ public class ArenaSelectorGUI implements InventoryHolder {
 
         switch (state) {
             case WAITING:
-                material = Material.GREEN_WOOL;
-                statusText = "&aWaiting";
+                material = Material.FILLED_MAP;
+                statusText = "&a&lWaiting";
                 break;
             case STARTING:
-                material = Material.YELLOW_WOOL;
-                statusText = "&eStarting";
+                material = Material.FILLED_MAP;
+                statusText = "&e&lStarting";
                 break;
             case IN_GAME:
-                material = Material.RED_WOOL;
-                statusText = "&cIn Game";
+                material = Material.FILLED_MAP;
+                statusText = "&c&lIn Game";
                 break;
             case DISABLED:
             default:
-                material = Material.BARRIER;
-                statusText = "&8Disabled";
+                material = Material.MAP;
+                statusText = "&8&lDisabled";
                 break;
         }
 
@@ -122,11 +122,11 @@ public class ArenaSelectorGUI implements InventoryHolder {
             lore.add(MessageUtils.color("&7Minimum Players: &b" + arena.getMinPlayers()));
             lore.add(MessageUtils.color(""));
             if (state == ArenaState.WAITING || state == ArenaState.STARTING) {
-                lore.add(MessageUtils.color("&aClick to join match!"));
+                lore.add(MessageUtils.color("&a▶ Click to Join Match!"));
             } else if (state == ArenaState.IN_GAME) {
-                lore.add(MessageUtils.color("&cGame in progress. Can't join."));
+                lore.add(MessageUtils.color("&c✖ Game in Progress. Can't Join."));
             } else {
-                lore.add(MessageUtils.color("&cArena is currently disabled."));
+                lore.add(MessageUtils.color("&c✖ Arena Setup Incomplete."));
             }
             meta.lore(lore);
             item.setItemMeta(meta);

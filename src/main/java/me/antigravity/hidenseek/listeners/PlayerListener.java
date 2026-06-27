@@ -3,6 +3,8 @@ package me.antigravity.hidenseek.listeners;
 import me.antigravity.hidenseek.HideNSeek;
 import me.antigravity.hidenseek.arena.Arena;
 import me.antigravity.hidenseek.arena.ArenaState;
+import me.antigravity.hidenseek.arena.SetupManager;
+import me.antigravity.hidenseek.arena.SetupManager.SetupSession;
 import me.antigravity.hidenseek.game.GameSession;
 import me.antigravity.hidenseek.game.PlayerRole;
 import me.antigravity.hidenseek.gui.ArenaSelectorGUI;
@@ -21,11 +23,14 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -57,39 +62,87 @@ public class PlayerListener implements Listener {
         ItemStack item = event.getItem();
         if (item == null) return;
 
-        // Setup Wand Logic
-        if (item.getType() == Material.GOLDEN_AXE && item.hasItemMeta()) {
-            String dispName = MessageUtils.colorLegacy("&6&lHideNSeek Setup Wand");
-            if (dispName.equals(MessageUtils.colorLegacy(MessageUtils.colorLegacy(item.getItemMeta().getDisplayName())))) {
-                if (!player.hasPermission("hns.setup") && !player.hasPermission("hns.admin")) {
-                    return;
-                }
-                
+        // Setup Mode Logic
+        if (plugin.getSetupManager().isInSetupMode(player)) {
+            event.setCancelled(true);
+            Material type = item.getType();
+            SetupSession session = plugin.getSetupManager().getSession(player);
+            Arena arena = session.getArena();
+
+            if (type == Material.GOLDEN_AXE) {
                 Block block = event.getClickedBlock();
-                if (block == null) return;
-
-                event.setCancelled(true);
-                Location loc = block.getLocation();
-
-                if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
-                    plugin.getArenaManager().setPos1(player.getUniqueId(), loc);
-                    String msg = plugin.getConfigManager().getMessage("admin.pos1-set", true)
-                            .replace("%x%", String.valueOf(loc.getBlockX()))
-                            .replace("%y%", String.valueOf(loc.getBlockY()))
-                            .replace("%z%", String.valueOf(loc.getBlockZ()))
-                            .replace("%world%", loc.getWorld().getName());
-                    MessageUtils.sendMessage(player, msg);
-                } else if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                    plugin.getArenaManager().setPos2(player.getUniqueId(), loc);
-                    String msg = plugin.getConfigManager().getMessage("admin.pos2-set", true)
-                            .replace("%x%", String.valueOf(loc.getBlockX()))
-                            .replace("%y%", String.valueOf(loc.getBlockY()))
-                            .replace("%z%", String.valueOf(loc.getBlockZ()))
-                            .replace("%world%", loc.getWorld().getName());
-                    MessageUtils.sendMessage(player, msg);
+                if (block != null) {
+                    Location loc = block.getLocation();
+                    if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
+                        arena.setPos1(loc);
+                        MessageUtils.sendMessage(player, "&a&l✅ &ePosition 1 set to &6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
+                        MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+                        plugin.getSetupManager().printChecklist(player, arena);
+                    } else if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                        arena.setPos2(loc);
+                        MessageUtils.sendMessage(player, "&a&l✅ &ePosition 2 set to &6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
+                        MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+                        plugin.getSetupManager().printChecklist(player, arena);
+                    }
                 }
                 return;
             }
+
+            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                if (type == Material.BEACON) {
+                    arena.setLobbySpawn(player.getLocation());
+                    
+                    // Set global lobby fallback automatically if not set
+                    if (plugin.getArenaManager().getGlobalLobby() == null) {
+                        plugin.getArenaManager().setGlobalLobby(player.getLocation());
+                    }
+                    
+                    MessageUtils.sendMessage(player, "&a&l✅ &eLobby spawn set to your current location.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+                    plugin.getSetupManager().printChecklist(player, arena);
+                } else if (type == Material.REDSTONE_TORCH) {
+                    arena.setSeekerSpawn(player.getLocation());
+                    MessageUtils.sendMessage(player, "&a&l✅ &eSeeker spawn set to your current location.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+                    plugin.getSetupManager().printChecklist(player, arena);
+                } else if (type == Material.EMERALD) {
+                    arena.addHiderSpawn(player.getLocation());
+                    int index = arena.getHiderSpawns().size();
+                    MessageUtils.sendMessage(player, "&a&l✅ &eHider spawn point #" + index + " added at your location.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+                    plugin.getSetupManager().printChecklist(player, arena);
+                } else if (type == Material.NETHER_STAR) {
+                    List<String> missing = new ArrayList<>();
+                    if (arena.getLobbySpawn() == null) missing.add("Lobby Spawn");
+                    if (arena.getSeekerSpawn() == null) missing.add("Seeker Spawn");
+                    if (arena.getHiderSpawns().isEmpty()) missing.add("Hider Spawn");
+                    if (arena.getPos1() == null || arena.getPos2() == null) missing.add("Region Boundary");
+
+                    if (missing.isEmpty()) {
+                        arena.setEnabled(true);
+                        plugin.getArenaManager().saveArena(arena);
+                        MessageUtils.sendMessage(player, "&8&m========================================");
+                        MessageUtils.sendMessage(player, "  &a&lSUCCESS! &eArena has been validated, saved, and auto-enabled!");
+                        MessageUtils.sendMessage(player, "  &eStatus: &2Enabled, Configured, Ready");
+                        MessageUtils.sendMessage(player, "&8&m========================================");
+                        MessageUtils.playSound(player, "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f);
+                        plugin.getSetupManager().printChecklist(player, arena);
+                    } else {
+                        MessageUtils.sendMessage(player, "&8&m========================================");
+                        MessageUtils.sendMessage(player, "  &c&lVALIDATION FAILED!");
+                        MessageUtils.sendMessage(player, "  &cThe arena cannot be enabled because setup is incomplete.");
+                        MessageUtils.sendMessage(player, "  &7Missing elements:");
+                        for (String m : missing) {
+                            MessageUtils.sendMessage(player, "  &c• " + m);
+                        }
+                        MessageUtils.sendMessage(player, "&8&m========================================");
+                        MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
+                    }
+                } else if (type == Material.IRON_DOOR) {
+                    plugin.getSetupManager().exitSetupMode(player, true);
+                }
+            }
+            return;
         }
 
         // Lobby Items Logic
@@ -140,8 +193,8 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        // Prevent moving items inside active game sessions
-        if (plugin.isPlayerInGame(player)) {
+        // Prevent moving items inside active game sessions or setup sessions
+        if (plugin.isPlayerInGame(player) || plugin.getSetupManager().isInSetupMode(player)) {
             event.setCancelled(true);
         }
     }
@@ -151,7 +204,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
-        if (plugin.isPlayerInGame(player)) {
+        if (plugin.isPlayerInGame(player) || plugin.getSetupManager().isInSetupMode(player)) {
             if (!canBypass(player)) {
                 event.setCancelled(true);
                 MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("errors.no-bypass", true));
@@ -162,7 +215,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
-        if (plugin.isPlayerInGame(player)) {
+        if (plugin.isPlayerInGame(player) || plugin.getSetupManager().isInSetupMode(player)) {
             if (!canBypass(player)) {
                 event.setCancelled(true);
                 MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("errors.no-bypass", true));
@@ -213,7 +266,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
-        if (plugin.isPlayerInGame(player)) {
+        if (plugin.isPlayerInGame(player) || plugin.getSetupManager().isInSetupMode(player)) {
             if (!canBypass(player)) {
                 event.setCancelled(true);
             }
@@ -279,11 +332,34 @@ public class PlayerListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
+        if (plugin.isPlayerInGame(player) || plugin.getSetupManager().isInSetupMode(player)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        if (plugin.isPlayerInGame(player)) {
+            event.getDrops().clear();
+            event.setKeepInventory(true);
+        }
+    }
+
     // --- Player Quit Cleanups ---
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+        
+        // Restore setup mode state if quitting
+        if (plugin.getSetupManager().isInSetupMode(player)) {
+            plugin.getSetupManager().exitSetupMode(player, true);
+        }
+
         GameSession session = plugin.getPlayerSession(player);
         if (session != null) {
             session.leave(player);

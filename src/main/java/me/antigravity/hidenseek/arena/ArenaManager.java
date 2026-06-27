@@ -17,12 +17,16 @@ public class ArenaManager {
 
     private final HideNSeek plugin;
     private final Map<String, Arena> arenas = new HashMap<>();
-    private final Map<UUID, String> editingArenas = new HashMap<>();
-    private final Map<UUID, Location[]> selectionMap = new HashMap<>(); // [0] = pos1, [1] = pos2
     private Location globalLobby;
 
     public ArenaManager(HideNSeek plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Performs deferred loading of configurations on the first server tick.
+     */
+    public void load() {
         loadLobby();
         loadArenas();
     }
@@ -192,31 +196,5 @@ public class ArenaManager {
         saveLobby();
     }
 
-    // --- Setup / Editing Session Tracking ---
 
-    public void setEditingArena(UUID playerUuid, String arenaName) {
-        if (arenaName == null) {
-            editingArenas.remove(playerUuid);
-        } else {
-            editingArenas.put(playerUuid, arenaName);
-        }
-    }
-
-    public String getEditingArena(UUID playerUuid) {
-        return editingArenas.get(playerUuid);
-    }
-
-    public Location[] getSelection(UUID playerUuid) {
-        return selectionMap.computeIfAbsent(playerUuid, k -> new Location[2]);
-    }
-
-    public void setPos1(UUID playerUuid, Location loc) {
-        Location[] selection = getSelection(playerUuid);
-        selection[0] = loc;
-    }
-
-    public void setPos2(UUID playerUuid, Location loc) {
-        Location[] selection = getSelection(playerUuid);
-        selection[1] = loc;
-    }
 }

@@ -3,6 +3,7 @@ package me.antigravity.hidenseek;
 import me.antigravity.hidenseek.api.HideNSeekAPI;
 import me.antigravity.hidenseek.arena.Arena;
 import me.antigravity.hidenseek.arena.ArenaManager;
+import me.antigravity.hidenseek.arena.SetupManager;
 import me.antigravity.hidenseek.bazooka.BazookaManager;
 import me.antigravity.hidenseek.commands.HNSCommand;
 import me.antigravity.hidenseek.config.ConfigManager;
@@ -34,6 +35,7 @@ public final class HideNSeek extends JavaPlugin implements HideNSeekAPI {
     private PlayerManager playerManager;
     private BazookaManager bazookaManager;
     private GameService gameService;
+    private SetupManager setupManager;
 
     private ItemStack lobbyItemJoin;
     private ItemStack lobbyItemLeave;
@@ -51,11 +53,16 @@ public final class HideNSeek extends JavaPlugin implements HideNSeekAPI {
         playerManager = new PlayerManager(this);
         bazookaManager = new BazookaManager(this);
         gameService = new GameService(this);
+        setupManager = new SetupManager(this);
 
-        // 3. Register Active Game Sessions via GameService
-        for (Arena arena : arenaManager.getArenas()) {
-            createGameSession(arena);
-        }
+        // 3. Register Active Game Sessions via GameService (Deferred to first tick)
+        getServer().getScheduler().runTask(this, () -> {
+            arenaManager.load();
+            for (Arena arena : arenaManager.getArenas()) {
+                createGameSession(arena);
+            }
+            getLogger().info("Deferred loading complete. Initialized " + arenaManager.getArenas().size() + " arenas.");
+        });
 
         // 4. Load Custom Matchmaking Lobby Items
         loadLobbyItems();
@@ -208,6 +215,10 @@ public final class HideNSeek extends JavaPlugin implements HideNSeekAPI {
 
     public GameService getGameService() {
         return gameService;
+    }
+
+    public SetupManager getSetupManager() {
+        return setupManager;
     }
 
     public ItemStack getLobbyItemJoin() {
