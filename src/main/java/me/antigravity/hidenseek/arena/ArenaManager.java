@@ -82,23 +82,11 @@ public class ArenaManager {
                 }
             }
         }
-        if (config.contains("lobby-pos1")) {
-            arena.setLobbyPos1(LocationUtils.deserialize(config.getString("lobby-pos1")));
+        if (config.contains("pos1")) {
+            arena.setPos1(LocationUtils.deserialize(config.getString("pos1")));
         }
-        if (config.contains("lobby-pos2")) {
-            arena.setLobbyPos2(LocationUtils.deserialize(config.getString("lobby-pos2")));
-        }
-        if (config.contains("seeker-pos1")) {
-            arena.setSeekerPos1(LocationUtils.deserialize(config.getString("seeker-pos1")));
-        }
-        if (config.contains("seeker-pos2")) {
-            arena.setSeekerPos2(LocationUtils.deserialize(config.getString("seeker-pos2")));
-        }
-        if (config.contains("hider-pos1")) {
-            arena.setHiderPos1(LocationUtils.deserialize(config.getString("hider-pos1")));
-        }
-        if (config.contains("hider-pos2")) {
-            arena.setHiderPos2(LocationUtils.deserialize(config.getString("hider-pos2")));
+        if (config.contains("pos2")) {
+            arena.setPos2(LocationUtils.deserialize(config.getString("pos2")));
         }
 
         arena.setMinPlayers(config.getInt("min-players", 2));
@@ -138,12 +126,8 @@ public class ArenaManager {
         }
         config.set("hider-spawns", hiderSpawnStrings);
 
-        config.set("lobby-pos1", LocationUtils.serialize(arena.getLobbyPos1()));
-        config.set("lobby-pos2", LocationUtils.serialize(arena.getLobbyPos2()));
-        config.set("seeker-pos1", LocationUtils.serialize(arena.getSeekerPos1()));
-        config.set("seeker-pos2", LocationUtils.serialize(arena.getSeekerPos2()));
-        config.set("hider-pos1", LocationUtils.serialize(arena.getHiderPos1()));
-        config.set("hider-pos2", LocationUtils.serialize(arena.getHiderPos2()));
+        config.set("pos1", LocationUtils.serialize(arena.getPos1()));
+        config.set("pos2", LocationUtils.serialize(arena.getPos2()));
 
         storage.save();
     }

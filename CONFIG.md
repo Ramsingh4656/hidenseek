@@ -14,6 +14,7 @@ game-settings:
   max-players: 20
   auto-start-players: 8
   seeker-safe-area-size: 5
+  lobby-boundary-size: 15
   countdown-seconds: 10
   match-timer-seconds: 300
   blindness-duration-seconds: 15
@@ -24,6 +25,7 @@ game-settings:
 * **`max-players`**: Maximum number of players allowed inside a single match session.
 * **`auto-start-players`**: Automatically begins the start countdown when the lobby reaches this player count.
 * **`seeker-safe-area-size`**: Dimension of the square safe area (e.g. 5 means 5x5 blocks) centered at the Seeker spawn. The seeker cannot leave this area during the countdown grace period.
+* **`lobby-boundary-size`**: Dimension of the square lobby boundary area (e.g. 15 means 15x15 blocks) centered at the Lobby spawn. Players waiting in lobby cannot leave this area.
 * **`countdown-seconds`**: Duration (in seconds) of the start countdown.
 * **`match-timer-seconds`**: Total match duration (in seconds). Hiders win if the timer expires.
 * **`blindness-duration-seconds`**: The grace hiding phase. Seekers are blinded and frozen inside the spawn safe area for this duration while Hiders hide.

@@ -14,13 +14,9 @@ public class Arena {
     private Location seekerSpawn;
     private final List<Location> hiderSpawns = new ArrayList<>();
     
-    // Boundary regions
-    private Location lobbyPos1;
-    private Location lobbyPos2;
-    private Location seekerPos1;
-    private Location seekerPos2;
-    private Location hiderPos1;
-    private Location hiderPos2;
+    // The single manual region boundary for match play
+    private Location pos1;
+    private Location pos2;
 
     private int minPlayers = 2;
     private int maxPlayers = 20;
@@ -68,55 +64,21 @@ public class Arena {
         hiderSpawns.clear();
     }
 
-    // Lobby boundary getters/setters
-    public Location getLobbyPos1() {
-        return lobbyPos1;
+    // Arena Boundary positions getters/setters
+    public Location getPos1() {
+        return pos1;
     }
 
-    public void setLobbyPos1(Location lobbyPos1) {
-        this.lobbyPos1 = lobbyPos1;
+    public void setPos1(Location pos1) {
+        this.pos1 = pos1;
     }
 
-    public Location getLobbyPos2() {
-        return lobbyPos2;
+    public Location getPos2() {
+        return pos2;
     }
 
-    public void setLobbyPos2(Location lobbyPos2) {
-        this.lobbyPos2 = lobbyPos2;
-    }
-
-    // Seeker boundary getters/setters
-    public Location getSeekerPos1() {
-        return seekerPos1;
-    }
-
-    public void setSeekerPos1(Location seekerPos1) {
-        this.seekerPos1 = seekerPos1;
-    }
-
-    public Location getSeekerPos2() {
-        return seekerPos2;
-    }
-
-    public void setSeekerPos2(Location seekerPos2) {
-        this.seekerPos2 = seekerPos2;
-    }
-
-    // Hider boundary getters/setters
-    public Location getHiderPos1() {
-        return hiderPos1;
-    }
-
-    public void setHiderPos1(Location hiderPos1) {
-        this.hiderPos1 = hiderPos1;
-    }
-
-    public Location getHiderPos2() {
-        return hiderPos2;
-    }
-
-    public void setHiderPos2(Location hiderPos2) {
-        this.hiderPos2 = hiderPos2;
+    public void setPos2(Location pos2) {
+        this.pos2 = pos2;
     }
 
     public int getMinPlayers() {
@@ -179,11 +141,9 @@ public class Arena {
     public List<String> getMissingSetupElements() {
         List<String> missing = new ArrayList<>();
         if (lobbySpawn == null) missing.add("Lobby Spawn");
-        if (lobbyPos1 == null || lobbyPos2 == null) missing.add("Lobby Boundary");
         if (seekerSpawn == null) missing.add("Seeker Spawn");
-        if (seekerPos1 == null || seekerPos2 == null) missing.add("Seeker Boundary");
         if (hiderSpawns.isEmpty()) missing.add("Hider Spawn");
-        if (hiderPos1 == null || hiderPos2 == null) missing.add("Hider Boundary");
+        if (pos1 == null || pos2 == null) missing.add("Arena Boundary");
         return missing;
     }
 
@@ -195,9 +155,9 @@ public class Arena {
     }
 
     /**
-     * Checks if a specific location falls inside the bounding box of a region.
+     * Checks if a specific location falls inside the bounding box of the Arena Boundary.
      */
-    private boolean isInside(Location pos1, Location pos2, Location loc) {
+    public boolean isInside(Location loc) {
         if (pos1 == null || pos2 == null || loc == null) {
             return false;
         }
@@ -214,24 +174,5 @@ public class Arena {
         return loc.getX() >= minX && loc.getX() <= maxX &&
                loc.getY() >= minY && loc.getY() <= maxY &&
                loc.getZ() >= minZ && loc.getZ() <= maxZ;
-    }
-
-    public boolean isInsideLobby(Location loc) {
-        return isInside(lobbyPos1, lobbyPos2, loc);
-    }
-
-    public boolean isInsideSeeker(Location loc) {
-        return isInside(seekerPos1, seekerPos2, loc);
-    }
-
-    public boolean isInsideHider(Location loc) {
-        return isInside(hiderPos1, hiderPos2, loc);
-    }
-
-    /**
-     * Retains compatibility with legacy checks referencing the main region (now hiders region).
-     */
-    public boolean isInside(Location loc) {
-        return isInsideHider(loc);
     }
 }

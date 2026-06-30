@@ -1,6 +1,6 @@
 # HideNSeek Commands & Permissions
 
-This file documents all available commands and permission nodes for HideNSeek v1.0.2.
+This file documents all available commands and permission nodes for HideNSeek v1.0.3.
 
 ---
 
@@ -25,7 +25,7 @@ The plugin uses the base command `/hns` (or `/hidenseek`). Subcommands are restr
 ### Administrator Commands
 
 #### `/hns create <arena>`
-* **Description**: Creates a new, blank arena profile.
+* **Description**: Creates a new, blank arena profile and automatically triggers Setup Mode for the creator.
 * **Usage**: `/hns create <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 
@@ -39,19 +39,24 @@ The plugin uses the base command `/hns` (or `/hidenseek`). Subcommands are restr
 * **Usage**: `/hns setup <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 
-#### `/hns setlobbyboundary [arena]`
-* **Description**: Sets the Lobby Boundary of the arena to your current wand selection.
-* **Usage**: `/hns setlobbyboundary` or `/hns setlobbyboundary <arena_name>`
+#### `/hns setlobby [arena]`
+* **Description**: Sets the Lobby Spawn of the arena to your current location.
+* **Usage**: `/hns setlobby` or `/hns setlobby <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 
-#### `/hns sethiderboundary [arena]`
-* **Description**: Sets the Hider Boundary of the arena to your current wand selection.
-* **Usage**: `/hns sethiderboundary` or `/hns sethiderboundary <arena_name>`
+#### `/hns setseeker [arena]`
+* **Description**: Sets the Seeker Spawn of the arena to your current location.
+* **Usage**: `/hns setseeker` or `/hns setseeker <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 
-#### `/hns setseekerboundary [arena]`
-* **Description**: Sets the Seeker Boundary of the arena to your current wand selection.
-* **Usage**: `/hns setseekerboundary` or `/hns setseekerboundary <arena_name>`
+#### `/hns addhiderspawn [arena]`
+* **Description**: Adds a Hider Spawn point at your current location.
+* **Usage**: `/hns addhiderspawn` or `/hns addhiderspawn <arena_name>`
+* **Permission**: `hns.setup` (Default: `op`)
+
+#### `/hns setboundary [arena]`
+* **Description**: Sets the single Arena Boundary to your current wand selection.
+* **Usage**: `/hns setboundary` or `/hns setboundary <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 
 #### `/hns start <arena>`

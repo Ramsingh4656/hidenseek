@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.0.3] - 2026-06-30
+### Added
+- **Simplified Boundary System**: Replaced the complex multiple boundary regions with a single Arena Boundary. Lobby boundary (15x15) and Seeker spawn protection safe area (5x5) are now automatically created and enforced.
+- **Auto-Setup on Create**: Running `/hns create <arena>` now automatically enters Setup Mode for that arena immediately.
+- **New Setup Subcommands**: Added `/hns setlobby`, `/hns setseeker`, `/hns addhiderspawn`, and `/hns setboundary` to make command setup quick and easy.
+
+### Fixed
+- **Critical Team Assignment Bug**: Fixed a gameplay-breaking bug to guarantee that exactly one online player is randomly selected as Seeker and all other players become Hiders.
+- **Seeker Disconnect Bug**: Fixed a bug where a seeker disconnecting would break the match. A random hider is now promoted to seeker, receiving the appropriate items, potion effects, and scale attributes.
+- **Unified Scoreboard Sidebar**: Completely reworked scoreboard layouts to dynamically print clean lines (Arena, Players, State, Seekers, Hiders, Time) without raw color codes or duplicate entries, fully compatible with Java and Bedrock clients.
+- **Out-of-Bounds Warn Rate-limiting**: Fixed warning spam by rate-limiting boundary notifications and bass sounds to at most once every 3 seconds.
+
 ## [1.0.2] - 2026-06-30
 ### Added
 - **Separate Boundary Regions**: Implemented separate Lobby Boundary, Seeker Boundary, and Hider Boundary configurations.

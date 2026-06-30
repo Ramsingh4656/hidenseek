@@ -5,6 +5,7 @@ game-settings:
   max-players: 20
   auto-start-players: 8
   seeker-safe-area-size: 5
+  lobby-boundary-size: 15
   countdown-seconds: 10
   match-timer-seconds: 300
   blindness-duration-seconds: 15

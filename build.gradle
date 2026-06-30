@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'me.antigravity'
-version = '1.0.2'
+version = '1.0.3'
 
 repositories {
     mavenCentral()
@@ -49,5 +49,5 @@ processResources {
 }
 
 tasks.named('jar') {
-    archiveFileName = 'HideNSeek-1.0.2.jar'
+    archiveFileName = 'HideNSeek-1.0.3.jar'
 }

@@ -8,7 +8,7 @@ HideNSeek is a highly customizable, production-ready, infection-style Hide and S
 - **Infection Game Flow**: Hiders become tiny (using Minecraft's native `GENERIC_SCALE`, no client resource pack required). Seekers search and tag them. Eliminated Hiders join the hunt!
 - **Bedrock / Pocket Edition Compatibility**: Full native support for Bedrock players connecting through Geyser/Floodgate. All titles, action bars, bossbars, and inventory items work perfectly on mobile/Bedrock clients.
 - **Visual Setup GUI & Scoreboard Checklist**: Open a 27-slot chest GUI automatically when configuring. Real-time checkbox statuses are shown on a live scoreboard sidebar checklist as you configure.
-- **Three-Boundary System**: Configure separate bounding boxes for the Lobby, Seekers, and Hiders to enforce region rules during different game stages.
+- **Single Boundary Setup**: Simple, single editable region boundary for the arena gameplay. Lobby boundaries (15x15) and seeker safe areas (5x5) are automatically generated dynamically.
 - **Seeker Safe Area**: Spawns seekers in a configurable (e.g. 5x5) protection region that they cannot leave during the hiding countdown, preventing rushing.
 - **Manual & Automatic Matchmaking Starting**: Redesigned starts using a Nether Star item to start manually when minimum players are met (default 2), alongside a configurable automatic start threshold (default 8).
 - **Custom Bazooka Rocket Launcher**: Fired projectiles detonate on impact, dealing splash damage to Hiders with custom sound, flame, and smoke animations.
@@ -26,7 +26,7 @@ HideNSeek is a highly customizable, production-ready, infection-style Hide and S
 ---
 
 ## Installation
-1. Put the compiled plugin jar (`HideNSeek-1.0.2.jar`) inside the server's `plugins/` folder.
+1. Put the compiled plugin jar (`HideNSeek-1.0.3.jar`) inside the server's `plugins/` folder.
 2. Start the Paper server.
 3. The plugin will automatically generate all necessary templates:
    - `plugins/HideNSeek/config.yml` - Gameplay parameters and weapons.
@@ -64,5 +64,5 @@ chmod +x gradlew
 
 The compiled plugin jar will be generated inside the output folder:
 ```text
-build/libs/HideNSeek-1.0.2.jar
+build/libs/HideNSeek-1.0.3.jar
 ```

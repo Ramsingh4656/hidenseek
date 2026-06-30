@@ -275,32 +275,44 @@ public class GameSession {
      * Starts the game, distributes roles, and sets up timers.
      */
     private void startGame() {
-        if (players.size() < arena.getMinPlayers()) {
+        // Collect currently online players
+        List<Player> onlinePlayers = new ArrayList<>();
+        for (UUID uuid : players) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline()) {
+                onlinePlayers.add(p);
+            }
+        }
+
+        if (onlinePlayers.size() < arena.getMinPlayers()) {
             cancelLobbyCountdown();
             broadcastMessage("&cGame cancelled due to insufficient players.");
             return;
+        }
+
+        // Clean up internal players list to only contain the online players
+        players.clear();
+        for (Player p : onlinePlayers) {
+            players.add(p.getUniqueId());
         }
 
         arena.setState(ArenaState.IN_GAME);
         seekersReleased = false;
         
         matchSecondsLeft = arena.getTimer();
-        blindnessSecondsLeft = plugin.getConfigManager().getConfig().getInt("game-settings.blindness-duration-seconds", 30);
+        blindnessSecondsLeft = plugin.getConfigManager().getConfig().getInt("game-settings.blindness-duration-seconds", 15);
 
-        // Select Random Seeker
+        // Select exactly one random player to be the Seeker
         Random rand = new Random();
-        int seekerIndex = rand.nextInt(players.size());
-        UUID seekerUuid = players.get(seekerIndex);
+        Player seeker = onlinePlayers.get(rand.nextInt(onlinePlayers.size()));
+        UUID seekerUuid = seeker.getUniqueId();
 
         // Assign Roles and Teleport
         List<Location> hiderSpawns = arena.getHiderSpawns();
         int spawnIndex = 0;
 
-        for (int i = 0; i < players.size(); i++) {
-            UUID uuid = players.get(i);
-            Player p = Bukkit.getPlayer(uuid);
-            if (p == null) continue;
-
+        for (Player p : onlinePlayers) {
+            UUID uuid = p.getUniqueId();
             p.getInventory().clear();
             p.setGameMode(GameMode.ADVENTURE);
 
@@ -528,43 +540,54 @@ public class GameSession {
 
         int hidersCount = 0;
         int seekersCount = 0;
-        UUID lastHider = null;
+        List<UUID> activeHiders = new ArrayList<>();
 
         for (UUID uuid : players) {
             PlayerRole r = roles.get(uuid);
             if (r == PlayerRole.HIDER) {
                 hidersCount++;
-                lastHider = uuid;
+                activeHiders.add(uuid);
             } else if (r == PlayerRole.SEEKER) {
                 seekersCount++;
             }
         }
 
-        // No hiders left -> Seekers Win!
+        if (players.isEmpty()) {
+            stop();
+            return;
+        }
+
         if (hidersCount == 0) {
             endGame(PlayerRole.SEEKER);
             return;
         }
 
-        // No seekers left -> Select a random Hider to become the Seeker!
-        if (seekersCount == 0 && hidersCount > 0) {
-            Player randomHider = Bukkit.getPlayer(lastHider);
-            if (randomHider != null) {
-                roles.put(lastHider, PlayerRole.SEEKER);
-                plugin.getPlayerManager().setScale(randomHider, 1.0);
-                
-                if (seekersReleased) {
-                    int maxAmmo = plugin.getConfigManager().getConfig().getInt("bazooka-settings.max-ammo", 10);
-                    randomHider.getInventory().addItem(plugin.getBazookaManager().createBazooka(maxAmmo));
-                } else {
-                    randomHider.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, blindnessSecondsLeft * 20, 1, false, false));
+        if (seekersCount == 0) {
+            if (!activeHiders.isEmpty()) {
+                Random rand = new Random();
+                UUID newSeekerUuid = activeHiders.get(rand.nextInt(activeHiders.size()));
+                Player newSeeker = Bukkit.getPlayer(newSeekerUuid);
+                if (newSeeker != null) {
+                    roles.put(newSeekerUuid, PlayerRole.SEEKER);
+                    plugin.getPlayerManager().setScale(newSeeker, 1.0);
+                    
+                    newSeeker.getInventory().clear();
+                    if (seekersReleased) {
+                        int maxAmmo = plugin.getConfigManager().getConfig().getInt("bazooka-settings.max-ammo", 10);
+                        newSeeker.getInventory().addItem(plugin.getBazookaManager().createBazooka(maxAmmo));
+                        MessageUtils.sendTitle(newSeeker, "&c&lYOU ARE THE SEEKER", "&eAll seekers left! Find the Hiders!", 10, 50, 10);
+                    } else {
+                        newSeeker.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, blindnessSecondsLeft * 20, 1, false, false));
+                        MessageUtils.sendTitle(newSeeker, "&c&lYOU ARE THE SEEKER", "&eWait for the hiding countdown to end!", 10, 50, 10);
+                    }
+                    
+                    broadcastMessage("&eAll Seekers left! &6" + newSeeker.getName() + " &ehas been selected as the new Seeker.");
+                    
+                    // Recheck in case they were the only hider
+                    checkWinConditions();
                 }
-
-                broadcastMessage("&eAll Seekers left! &6" + randomHider.getName() + " &ehas been selected as the new Seeker.");
-                MessageUtils.sendTitle(randomHider, "&c&lNEW SEEKER", "&eAll seekers left! Find the Hiders!", 10, 50, 10);
-                
-                // Recheck in case they were the only hider
-                checkWinConditions();
+            } else {
+                stop();
             }
         }
     }
@@ -684,7 +707,21 @@ public class GameSession {
         }
 
         String timeStr = arena.getState() == ArenaState.IN_GAME ? formatTime(matchSecondsLeft) : "00:00";
-        List<String> linesTemplate = plugin.getConfigManager().getConfig().getStringList("scoreboard.lines");
+        String stateStr = "";
+        switch (arena.getState()) {
+            case DISABLED:
+                stateStr = "&cDisabled";
+                break;
+            case WAITING:
+                stateStr = "&aWaiting";
+                break;
+            case STARTING:
+                stateStr = "&eStarting";
+                break;
+            case IN_GAME:
+                stateStr = seekersReleased ? "&6In Game" : "&bHiding Phase";
+                break;
+        }
 
         for (UUID uuid : players) {
             Player p = Bukkit.getPlayer(uuid);
@@ -692,15 +729,17 @@ public class GameSession {
             if (p == null || sb == null) continue;
 
             List<String> formattedLines = new ArrayList<>();
-            for (String line : linesTemplate) {
-                String formatted = line.replace("%arena%", arena.getName())
-                                      .replace("%time%", timeStr)
-                                      .replace("%seekers_count%", String.valueOf(seekers))
-                                      .replace("%hiders_count%", String.valueOf(hiders))
-                                      .replace("%players_count%", String.valueOf(players.size()))
-                                      .replace("%max_players%", String.valueOf(arena.getMaxPlayers()));
-                formattedLines.add(formatted);
-            }
+            formattedLines.add("&7---------------------");
+            formattedLines.add("&eArena: &f" + arena.getName());
+            formattedLines.add("&ePlayers: &f" + players.size() + "&7/&f" + arena.getMaxPlayers());
+            formattedLines.add("&eState: " + stateStr);
+            formattedLines.add("&7--------------------- "); // extra space for uniqueness
+            formattedLines.add("&cSeekers: &f" + seekers);
+            formattedLines.add("&aHiders: &f" + hiders);
+            formattedLines.add("&7---------------------  "); // two spaces
+            formattedLines.add("&eTime: &b" + timeStr);
+            formattedLines.add("&7---------------------   "); // three spaces
+
             sb.update(formattedLines);
         }
     }

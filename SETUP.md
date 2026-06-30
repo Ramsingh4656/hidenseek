@@ -12,20 +12,22 @@ Run the command:
 /hns create City
 ```
 *(Replace `City` with your preferred arena name).*
+**Note**: This command automatically enters Setup Mode for you!
 
 ---
 
-### Step 2: Enter Setup Mode
-Run the command:
-```bash
-/hns setup City
-```
-You will enter **Interactive Setup Mode**:
+### Step 2: Setup Mode Features
+When entering Setup Mode:
 - Your inventory is temporarily backed up and cleared.
 - You are placed in Creative mode with flying enabled.
 - A visual **Setup GUI** chest menu opens automatically.
 - A real-time **Setup Checklist** sidebar scoreboard appears on the right side of your screen.
 - You receive setup hotbar items (Beacon, Seeker Torch, Emerald, Wand, Nether Star, Iron Door) to configure settings.
+
+If you ever exit and need to enter setup again, run:
+```bash
+/hns setup City
+```
 
 ---
 
@@ -38,15 +40,13 @@ You can click items inside the visual **Setup GUI** chest menu (or right-click h
 * **Seeker Spawn** (Redstone Torch): Stand at the Seeker spawn point and click this item to set it.
 * **Hider Spawn** (Emerald): Stand at a hiding spot and click this item to add a Hider spawn point. (You can add multiple spawns. Spawns are randomized. Right-click this item inside the GUI to clear all hider spawns).
 
-#### Boundary Configuration
-Every boundary must be configured using the **Selection Wand** (Golden Axe):
+#### Arena Boundary Configuration
+The Arena Boundary must be configured using the **Selection Wand** (Golden Axe):
 1. Click the **Selection Wand** icon in the GUI (or select it from your hotbar).
 2. **Left-click** a block to set **Position 1**.
 3. **Right-click** a block to set **Position 2**.
-4. Open the Setup GUI and click the corresponding boundary glass icon to assign your selection, OR run the commands:
-   * **Lobby Boundary** (Green Glass): `/hns setlobbyboundary`
-   * **Seeker Boundary** (Red Glass): `/hns setseekerboundary`
-   * **Hider Boundary** (Blue Glass): `/hns sethiderboundary`
+4. Open the Setup GUI and click the **Arena Boundary** (Iron Bars) item to assign your selection, OR run the command:
+   * `/hns setboundary`
 
 #### Actions
 * **Save Arena** (Nether Star): Click to validate and save configuration. The arena will be auto-enabled only if all spawns and boundaries are set. If incomplete, it displays a list of exactly what is missing.
@@ -70,13 +70,10 @@ The command will print a clean, human-readable settings coordinate list:
   Players: 0/20
 
   Lobby Spawn: 10, 64, -20 (world)
-  Lobby Boundary: (5, 60, -25) to (15, 70, -15) (world)
-
   Seeker Spawn: 24, 64, 5 (world)
-  Seeker Boundary: (20, 60, 0) to (30, 70, 10) (world)
-
   Hider Spawns: 3 registered
-  Hider Boundary: (-50, 60, -50) to (50, 90, 50) (world)
+
+  Arena Boundary: (5, 60, -25) to (150, 90, 150) (world)
 
   Timer: 300s
   Minimum Players: 2

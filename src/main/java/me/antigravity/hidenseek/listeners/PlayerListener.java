@@ -182,41 +182,13 @@ public class PlayerListener implements Listener {
                 MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
                 plugin.getSetupManager().printChecklist(player, arena);
                 gui.refresh();
-            } else if (slot == 11) { // Set Lobby Boundary
-                Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
-                Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
-                if (pos1 == null || pos2 == null) {
-                    MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
-                    MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
-                } else {
-                    arena.setLobbyPos1(pos1);
-                    arena.setLobbyPos2(pos2);
-                    MessageUtils.sendMessage(player, "&a&l✅ &eLobby boundary set.");
-                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
-                    plugin.getSetupManager().printChecklist(player, arena);
-                    gui.refresh();
-                }
-            } else if (slot == 12) { // Set Seeker Spawn
+            } else if (slot == 11) { // Set Seeker Spawn
                 arena.setSeekerSpawn(player.getLocation());
                 MessageUtils.sendMessage(player, "&a&l✅ &eSeeker spawn set to your current location.");
                 MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
                 plugin.getSetupManager().printChecklist(player, arena);
                 gui.refresh();
-            } else if (slot == 13) { // Set Seeker Boundary
-                Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
-                Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
-                if (pos1 == null || pos2 == null) {
-                    MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
-                    MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
-                } else {
-                    arena.setSeekerPos1(pos1);
-                    arena.setSeekerPos2(pos2);
-                    MessageUtils.sendMessage(player, "&a&l✅ &eSeeker boundary set.");
-                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
-                    plugin.getSetupManager().printChecklist(player, arena);
-                    gui.refresh();
-                }
-            } else if (slot == 14) { // Hider Spawn (Left click add, Right click clear)
+            } else if (slot == 12) { // Hider Spawn (Left click add, Right click clear)
                 if (event.getClick().isRightClick()) {
                     arena.clearHiderSpawns();
                     MessageUtils.sendMessage(player, "&c&lCLEARED! &cAll hider spawn points cleared.");
@@ -229,21 +201,21 @@ public class PlayerListener implements Listener {
                 }
                 plugin.getSetupManager().printChecklist(player, arena);
                 gui.refresh();
-            } else if (slot == 15) { // Set Hider Boundary
+            } else if (slot == 13) { // Set Arena Boundary
                 Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
                 Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
                 if (pos1 == null || pos2 == null) {
                     MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
                     MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
                 } else {
-                    arena.setHiderPos1(pos1);
-                    arena.setHiderPos2(pos2);
-                    MessageUtils.sendMessage(player, "&a&l✅ &eHider boundary set.");
+                    arena.setPos1(pos1);
+                    arena.setPos2(pos2);
+                    MessageUtils.sendMessage(player, "&a&l✅ &eArena boundary set.");
                     MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
                     plugin.getSetupManager().printChecklist(player, arena);
                     gui.refresh();
                 }
-            } else if (slot == 16) { // Get Wand
+            } else if (slot == 14) { // Get Wand
                 player.getInventory().addItem(new ItemStack(Material.GOLDEN_AXE));
                 MessageUtils.sendMessage(player, "&a&lWAND GIVEN! &aSetup wand added.");
                 MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
@@ -420,17 +392,24 @@ public class PlayerListener implements Listener {
         Arena arena = session.getArena();
         PlayerRole role = session.getRole(player);
 
-        // 1. Lobby Phase boundaries
+        // 1. Lobby Phase boundaries (Automatic 15x15 around lobby spawn)
         if (role == PlayerRole.LOBBY || arena.getState() == ArenaState.WAITING || arena.getState() == ArenaState.STARTING) {
-            if (arena.getLobbyPos1() != null && arena.getLobbyPos2() != null && !arena.isInsideLobby(to)) {
-                event.setTo(event.getFrom());
-                player.teleport(event.getFrom());
-                sendBoundaryWarning(player);
+            Location lobbySpawn = arena.getLobbySpawn();
+            if (lobbySpawn != null) {
+                int size = plugin.getConfigManager().getConfig().getInt("game-settings.lobby-boundary-size", 15);
+                double radius = size / 2.0;
+                double dx = Math.abs(to.getX() - lobbySpawn.getX());
+                double dz = Math.abs(to.getZ() - lobbySpawn.getZ());
+                if (dx > radius || dz > radius) {
+                    event.setTo(event.getFrom());
+                    player.teleport(event.getFrom());
+                    sendBoundaryWarning(player, "&c&lWARNING! &cYou cannot leave the lobby waiting area!", false);
+                }
             }
             return;
         }
 
-        // 2. Seeker Safe Area during countdown (grace period)
+        // 2. Seeker Safe Area during countdown (Automatic 5x5 around seeker spawn)
         if (role == PlayerRole.SEEKER && !session.isSeekersReleased() && arena.getState() == ArenaState.IN_GAME) {
             int size = plugin.getConfigManager().getConfig().getInt("game-settings.seeker-safe-area-size", 5);
             Location spawn = arena.getSeekerSpawn();
@@ -441,42 +420,33 @@ public class PlayerListener implements Listener {
                 if (dx > radius || dz > radius) {
                     event.setTo(event.getFrom());
                     player.teleport(event.getFrom());
-                    UUID uuid = player.getUniqueId();
-                    long now = System.currentTimeMillis();
-                    if (!boundaryMessageCooldown.containsKey(uuid) || now - boundaryMessageCooldown.get(uuid) > 2000L) {
-                        boundaryMessageCooldown.put(uuid, now);
-                        player.sendMessage(MessageUtils.colorLegacy("&c&lWARNING! &cYou cannot leave the Seeker spawn protection region during the hiding countdown!"));
-                    }
+                    sendBoundaryWarning(player, "&c&lWARNING! &cYou cannot leave the Seeker spawn protection region during the hiding countdown!", false);
                 }
             }
             return;
         }
 
-        // 3. Match Phase boundaries
+        // 3. Match Phase boundaries (Arena Boundary)
         if (arena.getState() == ArenaState.IN_GAME) {
-            if (role == PlayerRole.HIDER) {
-                if (arena.getHiderPos1() != null && arena.getHiderPos2() != null && !arena.isInsideHider(to)) {
-                    event.setTo(event.getFrom());
-                    player.teleport(event.getFrom());
-                    sendBoundaryWarning(player);
-                }
-            } else if (role == PlayerRole.SEEKER) {
-                if (arena.getSeekerPos1() != null && arena.getSeekerPos2() != null && !arena.isInsideSeeker(to)) {
-                    event.setTo(event.getFrom());
-                    player.teleport(event.getFrom());
-                    sendBoundaryWarning(player);
-                }
+            if (!arena.isInside(to)) {
+                event.setTo(event.getFrom());
+                player.teleport(event.getFrom());
+                sendBoundaryWarning(player, "&cYou reached the arena boundary.", true);
             }
         }
     }
 
-    private void sendBoundaryWarning(Player player) {
+    private void sendBoundaryWarning(Player player, String message, boolean actionBar) {
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
-        if (!boundaryMessageCooldown.containsKey(uuid) || now - boundaryMessageCooldown.get(uuid) > 2000L) {
+        if (!boundaryMessageCooldown.containsKey(uuid) || now - boundaryMessageCooldown.get(uuid) > 3000L) {
             boundaryMessageCooldown.put(uuid, now);
-            String msg = plugin.getConfigManager().getMessage("errors.out-of-bounds", true);
-            MessageUtils.sendMessage(player, msg);
+            if (actionBar) {
+                MessageUtils.sendActionBar(player, message);
+            } else {
+                MessageUtils.sendMessage(player, message);
+            }
+            MessageUtils.playSound(player, "BLOCK_NOTE_BLOCK_BASS", 1.0f, 1.0f);
         }
     }
 

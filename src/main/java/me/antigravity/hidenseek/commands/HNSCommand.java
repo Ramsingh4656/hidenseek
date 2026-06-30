@@ -42,7 +42,9 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
                     MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("errors.no-permission", true));
                 }
             } else {
-                sender.sendMessage("HideNSeek plugin version 1.0.1. Run /hns help for commands.");
+                if (sender.hasPermission("hns.admin")) {
+                    sender.sendMessage("HideNSeek plugin version 1.0.3. Run /hns help for commands.");
+                }
             }
             return true;
         }
@@ -80,14 +82,19 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
             case "info":
                 handleInfo(sender, args);
                 break;
-            case "setlobbyboundary":
-                handleSetBoundary(sender, args, "lobby");
+            case "setlobby":
+            case "setlobbyspawn":
+                handleSetLobby(sender, args);
                 break;
-            case "setseekerboundary":
-                handleSetBoundary(sender, args, "seeker");
+            case "setseeker":
+            case "setseekerspawn":
+                handleSetSeeker(sender, args);
                 break;
-            case "sethiderboundary":
-                handleSetBoundary(sender, args, "hider");
+            case "addhiderspawn":
+                handleAddHiderSpawn(sender, args);
+                break;
+            case "setboundary":
+                handleSetBoundary(sender, args);
                 break;
             default:
                 MessageUtils.sendMessage(sender, "&c&lERROR! &cUnknown subcommand. Run &e/hns help &cfor a list of commands.");
@@ -145,6 +152,9 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
         } else {
             MessageUtils.sendMessage(sender, plugin.getConfigManager().getMessage("admin.arena-created", true).replace("%arena%", name));
             plugin.createGameSession(arena); // Register live session
+            if (sender instanceof Player) {
+                plugin.getSetupManager().enterSetupMode((Player) sender, arena);
+            }
         }
     }
 
@@ -339,13 +349,12 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
         MessageUtils.sendMessage(sender, "  &ePlayers: &b" + currentPlayers + "&7/&b" + arena.getMaxPlayers());
         MessageUtils.sendMessage(sender, "");
         MessageUtils.sendMessage(sender, "  &eLobby Spawn: " + formatLoc(arena.getLobbySpawn()));
-        MessageUtils.sendMessage(sender, "  &eLobby Boundary: " + formatBound(arena.getLobbyPos1(), arena.getLobbyPos2()));
         MessageUtils.sendMessage(sender, "");
         MessageUtils.sendMessage(sender, "  &eSeeker Spawn: " + formatLoc(arena.getSeekerSpawn()));
-        MessageUtils.sendMessage(sender, "  &eSeeker Boundary: " + formatBound(arena.getSeekerPos1(), arena.getSeekerPos2()));
         MessageUtils.sendMessage(sender, "");
         MessageUtils.sendMessage(sender, "  &eHider Spawns: &b" + arena.getHiderSpawns().size() + " registered");
-        MessageUtils.sendMessage(sender, "  &eHider Boundary: " + formatBound(arena.getHiderPos1(), arena.getHiderPos2()));
+        MessageUtils.sendMessage(sender, "");
+        MessageUtils.sendMessage(sender, "  &eArena Boundary: " + formatBound(arena.getPos1(), arena.getPos2()));
         MessageUtils.sendMessage(sender, "");
         MessageUtils.sendMessage(sender, "  &eTimer: &b" + arena.getTimer() + "s");
         MessageUtils.sendMessage(sender, "  &eMinimum Players: &b" + arena.getMinPlayers());
@@ -367,63 +376,89 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
                 p1.getWorld().getName());
     }
 
-    private void handleSetBoundary(CommandSender sender, String[] args, String boundaryType) {
+    private void handleSetLobby(CommandSender sender, String[] args) {
         if (!checkPermission(sender, "hns.setup")) return;
-        
-        Player player = null;
-        Arena arena = null;
-        
-        if (sender instanceof Player) {
-            player = (Player) sender;
-            if (plugin.getSetupManager().isInSetupMode(player)) {
-                arena = plugin.getSetupManager().getSession(player).getArena();
-            }
+        Player player = getPlayerOrArena(sender, args);
+        if (player == null) return;
+        Arena arena = getArenaFromSetupOrArgs(player, args, "/hns setlobby <arena_name>");
+        if (arena == null) return;
+
+        arena.setLobbySpawn(player.getLocation());
+        if (plugin.getArenaManager().getGlobalLobby() == null) {
+            plugin.getArenaManager().setGlobalLobby(player.getLocation());
         }
-        
-        if (arena == null) {
-            if (args.length < 2) {
-                MessageUtils.sendMessage(sender, plugin.getConfigManager().getMessage("errors.invalid-args", true)
-                        .replace("%usage%", "/hns set" + boundaryType + "boundary <arena_name>"));
-                return;
-            }
-            String name = args[1];
-            arena = plugin.getArenaManager().getArena(name);
-            if (arena == null) {
-                MessageUtils.sendMessage(sender, plugin.getConfigManager().getMessage("errors.arena-not-found", true).replace("%arena%", name));
-                return;
-            }
-        }
-        
-        if (player == null) {
-            sender.sendMessage("Only players can set boundaries because selections are player-specific.");
-            return;
-        }
-        
+        MessageUtils.sendMessage(player, "&a&l✅ &eLobby spawn set to your current location.");
+        plugin.getSetupManager().printChecklist(player, arena);
+    }
+
+    private void handleSetSeeker(CommandSender sender, String[] args) {
+        if (!checkPermission(sender, "hns.setup")) return;
+        Player player = getPlayerOrArena(sender, args);
+        if (player == null) return;
+        Arena arena = getArenaFromSetupOrArgs(player, args, "/hns setseeker <arena_name>");
+        if (arena == null) return;
+
+        arena.setSeekerSpawn(player.getLocation());
+        MessageUtils.sendMessage(player, "&a&l✅ &eSeeker spawn set to your current location.");
+        plugin.getSetupManager().printChecklist(player, arena);
+    }
+
+    private void handleAddHiderSpawn(CommandSender sender, String[] args) {
+        if (!checkPermission(sender, "hns.setup")) return;
+        Player player = getPlayerOrArena(sender, args);
+        if (player == null) return;
+        Arena arena = getArenaFromSetupOrArgs(player, args, "/hns addhiderspawn <arena_name>");
+        if (arena == null) return;
+
+        arena.addHiderSpawn(player.getLocation());
+        int index = arena.getHiderSpawns().size();
+        MessageUtils.sendMessage(player, "&a&l✅ &eHider spawn point #" + index + " added at your location.");
+        plugin.getSetupManager().printChecklist(player, arena);
+    }
+
+    private void handleSetBoundary(CommandSender sender, String[] args) {
+        if (!checkPermission(sender, "hns.setup")) return;
+        Player player = getPlayerOrArena(sender, args);
+        if (player == null) return;
+        Arena arena = getArenaFromSetupOrArgs(player, args, "/hns setboundary <arena_name>");
+        if (arena == null) return;
+
         Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
         Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
-        
         if (pos1 == null || pos2 == null) {
             MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
             return;
         }
-        
-        switch (boundaryType) {
-            case "lobby":
-                arena.setLobbyPos1(pos1);
-                arena.setLobbyPos2(pos2);
-                break;
-            case "seeker":
-                arena.setSeekerPos1(pos1);
-                arena.setSeekerPos2(pos2);
-                break;
-            case "hider":
-                arena.setHiderPos1(pos1);
-                arena.setHiderPos2(pos2);
-                break;
-        }
-        
-        MessageUtils.sendMessage(player, "&a&lSUCCESS! &e" + boundaryType.substring(0, 1).toUpperCase() + boundaryType.substring(1) + " boundary set for arena '&6" + arena.getName() + "&e'.");
+
+        arena.setPos1(pos1);
+        arena.setPos2(pos2);
+        MessageUtils.sendMessage(player, "&a&lSUCCESS! &eArena boundary set for arena '&6" + arena.getName() + "&e'.");
         plugin.getSetupManager().printChecklist(player, arena);
+    }
+
+    private Player getPlayerOrArena(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("Only players can perform setup locations.");
+            return null;
+        }
+        return (Player) sender;
+    }
+
+    private Arena getArenaFromSetupOrArgs(Player player, String[] args, String usage) {
+        if (plugin.getSetupManager().isInSetupMode(player)) {
+            return plugin.getSetupManager().getSession(player).getArena();
+        }
+        if (args.length < 2) {
+            MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("errors.invalid-args", true).replace("%usage%", usage));
+            return null;
+        }
+        String name = args[1];
+        Arena arena = plugin.getArenaManager().getArena(name);
+        if (arena == null) {
+            MessageUtils.sendMessage(player, plugin.getConfigManager().getMessage("errors.arena-not-found", true).replace("%arena%", name));
+            return null;
+        }
+        return arena;
     }
 
     @Override
@@ -440,9 +475,10 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
                 list.add("delete");
                 list.add("setup");
                 list.add("info");
-                list.add("setlobbyboundary");
-                list.add("setseekerboundary");
-                list.add("sethiderboundary");
+                list.add("setlobby");
+                list.add("setseeker");
+                list.add("addhiderspawn");
+                list.add("setboundary");
             }
             if (sender.hasPermission("hns.start") || sender.hasPermission("hns.admin")) {
                 list.add("start");
@@ -460,7 +496,8 @@ public class HNSCommand implements CommandExecutor, TabCompleter {
             String sub = args[0].toLowerCase();
             if (sub.equals("join") || sub.equals("start") || sub.equals("stop") ||
                 sub.equals("setup") || sub.equals("info") || sub.equals("delete") ||
-                sub.equals("setlobbyboundary") || sub.equals("setseekerboundary") || sub.equals("sethiderboundary")) {
+                sub.equals("setlobby") || sub.equals("setseeker") || sub.equals("addhiderspawn") ||
+                sub.equals("setboundary")) {
                 
                 List<String> arenaNames = plugin.getArenaManager().getArenas().stream()
                         .map(Arena::getName)

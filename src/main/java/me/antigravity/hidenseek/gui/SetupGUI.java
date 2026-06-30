@@ -49,25 +49,19 @@ public class SetupGUI implements InventoryHolder {
             inventory.setItem(i, filler);
         }
 
-        // Add setup elements in row 2 (slots 10 to 16)
+        // Add setup elements in row 2 (slots 10 to 14)
         inventory.setItem(10, buildChecklistItem(Material.BEACON, "&a&lLobby Spawn", 
                 arena.getLobbySpawn() != null, "Sets the Arena Lobby Spawn to your location."));
         
-        inventory.setItem(11, buildChecklistItem(Material.GREEN_STAINED_GLASS, "&a&lLobby Boundary", 
-                arena.getLobbyPos1() != null && arena.getLobbyPos2() != null, "Assigns your current Wand Selection as Lobby Boundary."));
-        
-        inventory.setItem(12, buildChecklistItem(Material.REDSTONE_TORCH, "&c&lSeeker Spawn", 
+        inventory.setItem(11, buildChecklistItem(Material.REDSTONE_TORCH, "&c&lSeeker Spawn", 
                 arena.getSeekerSpawn() != null, "Sets the Seeker Spawn point to your location."));
-        
-        inventory.setItem(13, buildChecklistItem(Material.RED_STAINED_GLASS, "&c&lSeeker Boundary", 
-                arena.getSeekerPos1() != null && arena.getSeekerPos2() != null, "Assigns your current Wand Selection as Seeker Boundary."));
         
         boolean hidersSet = !arena.getHiderSpawns().isEmpty();
         String hiderSpawnDesc = "Adds a Hider Spawn point at your location.\n&7Spawns set: &e" + arena.getHiderSpawns().size() + "\n&7(Right-click to clear all spawns)";
-        inventory.setItem(14, buildChecklistItem(Material.EMERALD, "&a&lHider Spawn", hidersSet, hiderSpawnDesc));
+        inventory.setItem(12, buildChecklistItem(Material.EMERALD, "&a&lHider Spawn", hidersSet, hiderSpawnDesc));
         
-        inventory.setItem(15, buildChecklistItem(Material.BLUE_STAINED_GLASS, "&a&lHider Boundary", 
-                arena.getHiderPos1() != null && arena.getHiderPos2() != null, "Assigns your current Wand Selection as Hider Boundary."));
+        inventory.setItem(13, buildChecklistItem(Material.IRON_BARS, "&b&lArena Boundary", 
+                arena.getPos1() != null && arena.getPos2() != null, "Assigns your current Wand Selection as the Arena Boundary."));
 
         // Selection Wand
         ItemStack wand = new ItemStack(Material.GOLDEN_AXE);
@@ -82,7 +76,7 @@ public class SetupGUI implements InventoryHolder {
             wandMeta.lore(lore);
             wand.setItemMeta(wandMeta);
         }
-        inventory.setItem(16, wand);
+        inventory.setItem(14, wand);
 
         // Row 3 Action Buttons (slots 20, 22, 24)
         inventory.setItem(20, buildActionButton(Material.NETHER_STAR, "&b&lSave Arena", "&7Validates, saves, and auto-enables this arena."));

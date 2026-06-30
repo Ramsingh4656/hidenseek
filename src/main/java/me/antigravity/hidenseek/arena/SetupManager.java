@@ -141,11 +141,9 @@ public class SetupManager {
      */
     public void printChecklist(Player player, Arena arena) {
         boolean lobbySet = arena.getLobbySpawn() != null;
-        boolean lobbyBoundSet = arena.getLobbyPos1() != null && arena.getLobbyPos2() != null;
         boolean seekerSet = arena.getSeekerSpawn() != null;
-        boolean seekerBoundSet = arena.getSeekerPos1() != null && arena.getSeekerPos2() != null;
         boolean hidersSet = !arena.getHiderSpawns().isEmpty();
-        boolean hiderBoundSet = arena.getHiderPos1() != null && arena.getHiderPos2() != null;
+        boolean boundarySet = arena.getPos1() != null && arena.getPos2() != null;
         boolean saved = arena.isEnabled();
         boolean finished = !isInSetupMode(player);
 
@@ -153,11 +151,9 @@ public class SetupManager {
         MessageUtils.sendMessage(player, "    &6&lArena Setup Checklist: &e" + arena.getName());
         MessageUtils.sendMessage(player, "");
         MessageUtils.sendMessage(player, (lobbySet ? "  &a✔ &eLobby Spawn" : "  &c✖ &eLobby Spawn &8(Need to set)"));
-        MessageUtils.sendMessage(player, (lobbyBoundSet ? "  &a✔ &eLobby Boundary" : "  &c✖ &eLobby Boundary &8(Need to select bounds)"));
         MessageUtils.sendMessage(player, (seekerSet ? "  &a✔ &eSeeker Spawn" : "  &c✖ &eSeeker Spawn &8(Need to set)"));
-        MessageUtils.sendMessage(player, (seekerBoundSet ? "  &a✔ &eSeeker Boundary" : "  &c✖ &eSeeker Boundary &8(Need to select bounds)"));
         MessageUtils.sendMessage(player, (hidersSet ? "  &a✔ &eHider Spawns &a(" + arena.getHiderSpawns().size() + ")" : "  &c✖ &eHider Spawns &8(Need to add)"));
-        MessageUtils.sendMessage(player, (hiderBoundSet ? "  &a✔ &eHider Boundary" : "  &c✖ &eHider Boundary &8(Need to select bounds)"));
+        MessageUtils.sendMessage(player, (boundarySet ? "  &a✔ &eArena Boundary" : "  &c✖ &eArena Boundary &8(Need to select bounds)"));
         MessageUtils.sendMessage(player, (saved ? "  &a✔ &eSaved" : "  &c✖ &eSaved"));
         MessageUtils.sendMessage(player, (finished ? "  &a✔ &eFinished" : "  &c✖ &eFinished"));
         MessageUtils.sendMessage(player, "&8&m========================================");
@@ -180,22 +176,18 @@ public class SetupManager {
         } catch (Throwable t) {}
 
         boolean lobbySet = arena.getLobbySpawn() != null;
-        boolean lobbyBoundSet = arena.getLobbyPos1() != null && arena.getLobbyPos2() != null;
         boolean seekerSet = arena.getSeekerSpawn() != null;
-        boolean seekerBoundSet = arena.getSeekerPos1() != null && arena.getSeekerPos2() != null;
         boolean hidersSet = !arena.getHiderSpawns().isEmpty();
-        boolean hiderBoundSet = arena.getHiderPos1() != null && arena.getHiderPos2() != null;
+        boolean boundarySet = arena.getPos1() != null && arena.getPos2() != null;
         boolean saved = arena.isEnabled();
         boolean finished = !isInSetupMode(player);
 
         List<String> lines = new ArrayList<>();
         lines.add("&7---------------------");
         lines.add((lobbySet ? "&a✔ &fLobby Spawn" : "&c✖ &fLobby Spawn"));
-        lines.add((lobbyBoundSet ? "&a✔ &fLobby Boundary" : "&c✖ &fLobby Boundary"));
         lines.add((seekerSet ? "&a✔ &fSeeker Spawn" : "&c✖ &fSeeker Spawn"));
-        lines.add((seekerBoundSet ? "&a✔ &fSeeker Boundary" : "&c✖ &fSeeker Boundary"));
         lines.add((hidersSet ? "&a✔ &fHider Spawns &a(" + arena.getHiderSpawns().size() + ")" : "&c✖ &fHider Spawns"));
-        lines.add((hiderBoundSet ? "&a✔ &fHider Boundary" : "&c✖ &fHider Boundary"));
+        lines.add((boundarySet ? "&a✔ &fArena Boundary" : "&c✖ &fArena Boundary"));
         lines.add((saved ? "&a✔ &fSaved" : "&c✖ &fSaved"));
         lines.add((finished ? "&a✔ &fFinished" : "&c✖ &fFinished"));
         lines.add("&7---------------------");
