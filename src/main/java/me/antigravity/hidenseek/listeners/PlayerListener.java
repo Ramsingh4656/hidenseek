@@ -8,6 +8,7 @@ import me.antigravity.hidenseek.arena.SetupManager.SetupSession;
 import me.antigravity.hidenseek.game.GameSession;
 import me.antigravity.hidenseek.game.PlayerRole;
 import me.antigravity.hidenseek.gui.ArenaSelectorGUI;
+import me.antigravity.hidenseek.gui.SetupGUI;
 import me.antigravity.hidenseek.utils.MessageUtils;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -74,12 +75,12 @@ public class PlayerListener implements Listener {
                 if (block != null) {
                     Location loc = block.getLocation();
                     if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
-                        arena.setPos1(loc);
+                        plugin.getSetupManager().setSelectionPos1(player, loc);
                         MessageUtils.sendMessage(player, "&a&l✅ &ePosition 1 set to &6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
                         MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
                         plugin.getSetupManager().printChecklist(player, arena);
                     } else if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                        arena.setPos2(loc);
+                        plugin.getSetupManager().setSelectionPos2(player, loc);
                         MessageUtils.sendMessage(player, "&a&l✅ &ePosition 2 set to &6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
                         MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
                         plugin.getSetupManager().printChecklist(player, arena);
@@ -91,12 +92,9 @@ public class PlayerListener implements Listener {
             if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 if (type == Material.BEACON) {
                     arena.setLobbySpawn(player.getLocation());
-                    
-                    // Set global lobby fallback automatically if not set
                     if (plugin.getArenaManager().getGlobalLobby() == null) {
                         plugin.getArenaManager().setGlobalLobby(player.getLocation());
                     }
-                    
                     MessageUtils.sendMessage(player, "&a&l✅ &eLobby spawn set to your current location.");
                     MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
                     plugin.getSetupManager().printChecklist(player, arena);
@@ -112,12 +110,7 @@ public class PlayerListener implements Listener {
                     MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
                     plugin.getSetupManager().printChecklist(player, arena);
                 } else if (type == Material.NETHER_STAR) {
-                    List<String> missing = new ArrayList<>();
-                    if (arena.getLobbySpawn() == null) missing.add("Lobby Spawn");
-                    if (arena.getSeekerSpawn() == null) missing.add("Seeker Spawn");
-                    if (arena.getHiderSpawns().isEmpty()) missing.add("Hider Spawn");
-                    if (arena.getPos1() == null || arena.getPos2() == null) missing.add("Region Boundary");
-
+                    List<String> missing = arena.getMissingSetupElements();
                     if (missing.isEmpty()) {
                         arena.setEnabled(true);
                         plugin.getArenaManager().saveArena(arena);
@@ -152,7 +145,8 @@ public class PlayerListener implements Listener {
             
             if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 if (item.getType() == Material.NETHER_STAR) {
-                    plugin.openArenaSelector(player);
+                    // Starts the game manually
+                    session.startLobbyCountdownManual(player);
                 } else if (item.getType() == Material.BARRIER) {
                     session.leave(player);
                 } else if (plugin.getBazookaManager().isBazooka(item)) {
@@ -171,6 +165,120 @@ public class PlayerListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
+
+        // Check if viewing SetupGUI
+        if (event.getInventory().getHolder() instanceof SetupGUI) {
+            event.setCancelled(true);
+            SetupGUI gui = (SetupGUI) event.getInventory().getHolder();
+            Arena arena = gui.getArena();
+            int slot = event.getRawSlot();
+            
+            if (slot == 10) { // Set Lobby Spawn
+                arena.setLobbySpawn(player.getLocation());
+                if (plugin.getArenaManager().getGlobalLobby() == null) {
+                    plugin.getArenaManager().setGlobalLobby(player.getLocation());
+                }
+                MessageUtils.sendMessage(player, "&a&l✅ &eLobby spawn set to your current location.");
+                MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+                plugin.getSetupManager().printChecklist(player, arena);
+                gui.refresh();
+            } else if (slot == 11) { // Set Lobby Boundary
+                Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
+                Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
+                if (pos1 == null || pos2 == null) {
+                    MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
+                    MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
+                } else {
+                    arena.setLobbyPos1(pos1);
+                    arena.setLobbyPos2(pos2);
+                    MessageUtils.sendMessage(player, "&a&l✅ &eLobby boundary set.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+                    plugin.getSetupManager().printChecklist(player, arena);
+                    gui.refresh();
+                }
+            } else if (slot == 12) { // Set Seeker Spawn
+                arena.setSeekerSpawn(player.getLocation());
+                MessageUtils.sendMessage(player, "&a&l✅ &eSeeker spawn set to your current location.");
+                MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+                plugin.getSetupManager().printChecklist(player, arena);
+                gui.refresh();
+            } else if (slot == 13) { // Set Seeker Boundary
+                Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
+                Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
+                if (pos1 == null || pos2 == null) {
+                    MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
+                    MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
+                } else {
+                    arena.setSeekerPos1(pos1);
+                    arena.setSeekerPos2(pos2);
+                    MessageUtils.sendMessage(player, "&a&l✅ &eSeeker boundary set.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+                    plugin.getSetupManager().printChecklist(player, arena);
+                    gui.refresh();
+                }
+            } else if (slot == 14) { // Hider Spawn (Left click add, Right click clear)
+                if (event.getClick().isRightClick()) {
+                    arena.clearHiderSpawns();
+                    MessageUtils.sendMessage(player, "&c&lCLEARED! &cAll hider spawn points cleared.");
+                    MessageUtils.playSound(player, "ENTITY_ITEM_BREAK", 1.0f, 0.8f);
+                } else {
+                    arena.addHiderSpawn(player.getLocation());
+                    int index = arena.getHiderSpawns().size();
+                    MessageUtils.sendMessage(player, "&a&l✅ &eHider spawn point #" + index + " added at your location.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+                }
+                plugin.getSetupManager().printChecklist(player, arena);
+                gui.refresh();
+            } else if (slot == 15) { // Set Hider Boundary
+                Location pos1 = plugin.getSetupManager().getSelectionPos1(player);
+                Location pos2 = plugin.getSetupManager().getSelectionPos2(player);
+                if (pos1 == null || pos2 == null) {
+                    MessageUtils.sendMessage(player, "&c&lERROR! &cYou must set both pos1 and pos2 first using the Region Wand.");
+                    MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
+                } else {
+                    arena.setHiderPos1(pos1);
+                    arena.setHiderPos2(pos2);
+                    MessageUtils.sendMessage(player, "&a&l✅ &eHider boundary set.");
+                    MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.2f);
+                    plugin.getSetupManager().printChecklist(player, arena);
+                    gui.refresh();
+                }
+            } else if (slot == 16) { // Get Wand
+                player.getInventory().addItem(new ItemStack(Material.GOLDEN_AXE));
+                MessageUtils.sendMessage(player, "&a&lWAND GIVEN! &aSetup wand added.");
+                MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
+            } else if (slot == 20) { // Save Arena
+                List<String> missing = arena.getMissingSetupElements();
+                if (missing.isEmpty()) {
+                    arena.setEnabled(true);
+                    plugin.getArenaManager().saveArena(arena);
+                    MessageUtils.sendMessage(player, "&8&m========================================");
+                    MessageUtils.sendMessage(player, "  &a&lSUCCESS! &eArena has been validated, saved, and auto-enabled!");
+                    MessageUtils.sendMessage(player, "  &eStatus: &2Enabled, Configured, Ready");
+                    MessageUtils.sendMessage(player, "&8&m========================================");
+                    MessageUtils.playSound(player, "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f);
+                } else {
+                    MessageUtils.sendMessage(player, "&8&m========================================");
+                    MessageUtils.sendMessage(player, "  &c&lVALIDATION FAILED!");
+                    MessageUtils.sendMessage(player, "  &cThe arena cannot be enabled because setup is incomplete.");
+                    MessageUtils.sendMessage(player, "  &7Missing elements:");
+                    for (String m : missing) {
+                        MessageUtils.sendMessage(player, "  &c• " + m);
+                    }
+                    MessageUtils.sendMessage(player, "&8&m========================================");
+                    MessageUtils.playSound(player, "ENTITY_WITHER_DEATH", 1.0f, 1.0f);
+                }
+                plugin.getSetupManager().printChecklist(player, arena);
+                gui.refresh();
+            } else if (slot == 22) { // Finish Setup
+                plugin.getSetupManager().exitSetupMode(player, true);
+                player.closeInventory();
+            } else if (slot == 24) { // Cancel Setup
+                plugin.getSetupManager().exitSetupMode(player, true);
+                player.closeInventory();
+            }
+            return;
+        }
 
         // Check if viewing Arena Selector GUI
         if (event.getInventory().getHolder() instanceof ArenaSelectorGUI) {
@@ -304,31 +412,71 @@ public class PlayerListener implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         GameSession session = plugin.getPlayerSession(player);
-        if (session == null || session.getArena().getState() != ArenaState.IN_GAME) {
+        if (session == null) {
             return;
         }
 
         Location to = event.getTo();
         Arena arena = session.getArena();
+        PlayerRole role = session.getRole(player);
 
-        if (!arena.isInside(to)) {
-            // Cancel boundary breach
-            event.setTo(event.getFrom());
-
-            // Teleport slightly back to prevent getting stuck
-            Location back = event.getFrom().clone().subtract(event.getFrom().getDirection().multiply(0.2));
-            if (arena.isInside(back)) {
-                player.teleport(back);
+        // 1. Lobby Phase boundaries
+        if (role == PlayerRole.LOBBY || arena.getState() == ArenaState.WAITING || arena.getState() == ArenaState.STARTING) {
+            if (arena.getLobbyPos1() != null && arena.getLobbyPos2() != null && !arena.isInsideLobby(to)) {
+                event.setTo(event.getFrom());
+                player.teleport(event.getFrom());
+                sendBoundaryWarning(player);
             }
+            return;
+        }
 
-            // Warning message with cooldown to prevent chat spam
-            UUID uuid = player.getUniqueId();
-            long now = System.currentTimeMillis();
-            if (!boundaryMessageCooldown.containsKey(uuid) || now - boundaryMessageCooldown.get(uuid) > 2000L) {
-                boundaryMessageCooldown.put(uuid, now);
-                String msg = plugin.getConfigManager().getMessage("errors.out-of-bounds", true);
-                MessageUtils.sendMessage(player, msg);
+        // 2. Seeker Safe Area during countdown (grace period)
+        if (role == PlayerRole.SEEKER && !session.isSeekersReleased() && arena.getState() == ArenaState.IN_GAME) {
+            int size = plugin.getConfigManager().getConfig().getInt("game-settings.seeker-safe-area-size", 5);
+            Location spawn = arena.getSeekerSpawn();
+            if (spawn != null) {
+                double radius = size / 2.0;
+                double dx = Math.abs(to.getX() - spawn.getX());
+                double dz = Math.abs(to.getZ() - spawn.getZ());
+                if (dx > radius || dz > radius) {
+                    event.setTo(event.getFrom());
+                    player.teleport(event.getFrom());
+                    UUID uuid = player.getUniqueId();
+                    long now = System.currentTimeMillis();
+                    if (!boundaryMessageCooldown.containsKey(uuid) || now - boundaryMessageCooldown.get(uuid) > 2000L) {
+                        boundaryMessageCooldown.put(uuid, now);
+                        player.sendMessage(MessageUtils.colorLegacy("&c&lWARNING! &cYou cannot leave the Seeker spawn protection region during the hiding countdown!"));
+                    }
+                }
             }
+            return;
+        }
+
+        // 3. Match Phase boundaries
+        if (arena.getState() == ArenaState.IN_GAME) {
+            if (role == PlayerRole.HIDER) {
+                if (arena.getHiderPos1() != null && arena.getHiderPos2() != null && !arena.isInsideHider(to)) {
+                    event.setTo(event.getFrom());
+                    player.teleport(event.getFrom());
+                    sendBoundaryWarning(player);
+                }
+            } else if (role == PlayerRole.SEEKER) {
+                if (arena.getSeekerPos1() != null && arena.getSeekerPos2() != null && !arena.isInsideSeeker(to)) {
+                    event.setTo(event.getFrom());
+                    player.teleport(event.getFrom());
+                    sendBoundaryWarning(player);
+                }
+            }
+        }
+    }
+
+    private void sendBoundaryWarning(Player player) {
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
+        if (!boundaryMessageCooldown.containsKey(uuid) || now - boundaryMessageCooldown.get(uuid) > 2000L) {
+            boundaryMessageCooldown.put(uuid, now);
+            String msg = plugin.getConfigManager().getMessage("errors.out-of-bounds", true);
+            MessageUtils.sendMessage(player, msg);
         }
     }
 

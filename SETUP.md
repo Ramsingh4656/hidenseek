@@ -23,50 +23,35 @@ Run the command:
 You will enter **Interactive Setup Mode**:
 - Your inventory is temporarily backed up and cleared.
 - You are placed in Creative mode with flying enabled.
-- Your hotbar is populated with 6 setup items.
+- A visual **Setup GUI** chest menu opens automatically.
+- A real-time **Setup Checklist** sidebar scoreboard appears on the right side of your screen.
+- You receive setup hotbar items (Beacon, Seeker Torch, Emerald, Wand, Nether Star, Iron Door) to configure settings.
 
 ---
 
-### Step 3: Setup Hotbar Configuration
+### Step 3: Setup GUI & Hotbar Configuration
 
-![Setup Hotbar Layout](https://via.placeholder.com/600x100.png?text=Lobby+Beacon+|+Torch+Seeker+|+Emerald+Hider+|+Gold+Axe+Wand+|+Star+Save+|+Door+Exit)
+You can click items inside the visual **Setup GUI** chest menu (or right-click hotbar items) to configure spawns and boundaries. The GUI items display dynamic `✔` or `✖` indicators showing configuration progress:
 
-You have the following items in your hotbar:
+#### Spawns Configuration
+* **Lobby Spawn** (Beacon): Stand at the lobby spawn location and click this item to set it.
+* **Seeker Spawn** (Redstone Torch): Stand at the Seeker spawn point and click this item to set it.
+* **Hider Spawn** (Emerald): Stand at a hiding spot and click this item to add a Hider spawn point. (You can add multiple spawns. Spawns are randomized. Right-click this item inside the GUI to clear all hider spawns).
 
-#### 1. Set Lobby (Slot 1 - Beacon)
-* Walk to the location where players should wait for the match countdown to start.
-* **Right-click** the Beacon item.
-* This sets the arena-specific lobby spawn.
+#### Boundary Configuration
+Every boundary must be configured using the **Selection Wand** (Golden Axe):
+1. Click the **Selection Wand** icon in the GUI (or select it from your hotbar).
+2. **Left-click** a block to set **Position 1**.
+3. **Right-click** a block to set **Position 2**.
+4. Open the Setup GUI and click the corresponding boundary glass icon to assign your selection, OR run the commands:
+   * **Lobby Boundary** (Green Glass): `/hns setlobbyboundary`
+   * **Seeker Boundary** (Red Glass): `/hns setseekerboundary`
+   * **Hider Boundary** (Blue Glass): `/hns sethiderboundary`
 
-#### 2. Set Seeker Spawn (Slot 2 - Redstone Torch)
-* Stand at the starting point where the Seeker should be released.
-* **Right-click** the Redstone Torch item.
-* This sets the Seeker's spawn location.
-
-#### 3. Add Hider Spawn (Slot 3 - Emerald)
-* Go to places in the arena map where Hiders should hide.
-* **Right-click** the Emerald item.
-* This adds a Hider spawn point. You can add as many as you want! Spawns are randomized.
-
-#### 4. Region Wand (Slot 4 - Golden Axe)
-* Set boundaries so players cannot escape:
-  * **Left-click** a block to set **Position 1**.
-  * **Right-click** a block to set **Position 2**.
-* Once both points are clicked, the bounding region box is defined.
-
-#### 5. Save Arena (Slot 5 - Nether Star)
-* **Right-click** the Nether Star.
-* This runs an automatic checklist check:
-  * ✅ Lobby exists
-  * ✅ Seeker spawn exists
-  * ✅ Hider spawn exists
-  * ✅ Region bounds exist
-* If complete, the arena is saved, auto-enabled, and ready for games immediately!
-* If incomplete, you will see a list of missing items (e.g. `❌ Region`).
-
-#### 6. Finish Setup (Slot 6 - Iron Door)
-* **Right-click** the Iron Door item.
-* This exits setup mode, disables creative flight, and restores your original inventory.
+#### Actions
+* **Save Arena** (Nether Star): Click to validate and save configuration. The arena will be auto-enabled only if all spawns and boundaries are set. If incomplete, it displays a list of exactly what is missing.
+* **Finish Setup** (Iron Door): Click to save, exit setup mode, and restore your original inventory.
+* **Cancel Setup** (Barrier): Click to cancel changes and exit setup mode.
 
 ---
 
@@ -75,15 +60,29 @@ Verify setup status using the info command:
 ```bash
 /hns info City
 ```
-You should see:
+The command will print a clean, human-readable settings coordinate list:
 ```text
-Arena: City
-Status: Enabled
-Players: 0/20
-Lobby: Set
-Seeker Spawn: Set
-Hider Spawns: 1
-Region: Set
-Timer: 300 seconds
+========================================
+  Arena Information: City
+
+  Status: WAITING
+  Enabled: Yes
+  Players: 0/20
+
+  Lobby Spawn: 10, 64, -20 (world)
+  Lobby Boundary: (5, 60, -25) to (15, 70, -15) (world)
+
+  Seeker Spawn: 24, 64, 5 (world)
+  Seeker Boundary: (20, 60, 0) to (30, 70, 10) (world)
+
+  Hider Spawns: 3 registered
+  Hider Boundary: (-50, 60, -50) to (50, 90, 50) (world)
+
+  Timer: 300s
+  Minimum Players: 2
+  Maximum Players: 20
+  Auto Start Players: 8
+========================================
 ```
 You are now ready to play! Players can join using `/hns join` or by clicking the Map icon in the Join GUI.
+

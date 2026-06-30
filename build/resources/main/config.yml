@@ -3,9 +3,11 @@
 game-settings:
   min-players: 2
   max-players: 20
+  auto-start-players: 8
+  seeker-safe-area-size: 5
   countdown-seconds: 10
   match-timer-seconds: 300
-  blindness-duration-seconds: 30
+  blindness-duration-seconds: 15
   hider-scale: 0.3
 
 bazooka-settings:
@@ -22,11 +24,11 @@ bazooka-settings:
   damage: 8.0
 
 lobby-items:
-  join-selector:
+  start-game:
     material: "NETHER_STAR"
-    name: "&a&lJoin Game &7(Right Click)"
+    name: "&a&lStart Game &7(Right Click)"
     lore:
-      - "&7Right-click to view and join active arenas."
+      - "&7Right-click to manually start the game."
   leave-lobby:
     material: "BARRIER"
     name: "&c&lLeave Lobby &7(Right Click)"

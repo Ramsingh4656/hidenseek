@@ -12,17 +12,21 @@ Settings governing match metrics, countdown durations, and player scaling proper
 game-settings:
   min-players: 2
   max-players: 20
+  auto-start-players: 8
+  seeker-safe-area-size: 5
   countdown-seconds: 10
   match-timer-seconds: 300
-  blindness-duration-seconds: 30
+  blindness-duration-seconds: 15
   hider-scale: 0.3
 ```
 
-* **`min-players`**: Minimum number of players required in the lobby before the start countdown begins.
+* **`min-players`**: Minimum number of players required in the lobby before the start countdown can be manually triggered.
 * **`max-players`**: Maximum number of players allowed inside a single match session.
-* **`countdown-seconds`**: Duration (in seconds) of the start countdown once minimum players are reached.
+* **`auto-start-players`**: Automatically begins the start countdown when the lobby reaches this player count.
+* **`seeker-safe-area-size`**: Dimension of the square safe area (e.g. 5 means 5x5 blocks) centered at the Seeker spawn. The seeker cannot leave this area during the countdown grace period.
+* **`countdown-seconds`**: Duration (in seconds) of the start countdown.
 * **`match-timer-seconds`**: Total match duration (in seconds). Hiders win if the timer expires.
-* **`blindness-duration-seconds`**: The grace hiding phase. Seekers are blinded and frozen at spawn for this duration while Hiders hide.
+* **`blindness-duration-seconds`**: The grace hiding phase. Seekers are blinded and frozen inside the spawn safe area for this duration while Hiders hide.
 * **`hider-scale`**: The physical scale factor applied to Hiders using Minecraft's native `GENERIC_SCALE` attribute. `0.3` reduces Hiders to 30% of normal size.
 
 ---
@@ -60,7 +64,7 @@ bazooka-settings:
 
 Hotbar items distributed to players when waiting inside a game lobby:
 
-* **`join-selector`**: Right-clicking this item opens the Match Join chest GUI. (Default: `NETHER_STAR`)
+* **`start-game`**: Right-clicking this item manually triggers the start countdown. Only works if minimum player count is reached. (Default: `NETHER_STAR`)
 * **`leave-lobby`**: Right-clicking this item exits the game session. (Default: `BARRIER`)
 
 ---

@@ -59,6 +59,10 @@ public class GameSession {
         return roles.get(player.getUniqueId());
     }
 
+    public boolean isSeekersReleased() {
+        return seekersReleased;
+    }
+
     /**
      * Attempts to add a player to this game session.
      */
@@ -114,7 +118,7 @@ public class GameSession {
 
         // Give Lobby Items
         player.getInventory().clear();
-        player.getInventory().setItem(0, plugin.getLobbyItemJoin());
+        player.getInventory().setItem(0, plugin.getLobbyItemStart());
         player.getInventory().setItem(8, plugin.getLobbyItemLeave());
         player.updateInventory();
 
@@ -129,8 +133,8 @@ public class GameSession {
                 .replace("%max%", String.valueOf(arena.getMaxPlayers()));
         broadcastMessage(joinMsg);
 
-        // Check if countdown should start
-        if (players.size() >= arena.getMinPlayers() && arena.getState() == ArenaState.WAITING) {
+        // Check if countdown should start automatically
+        if (players.size() >= arena.getAutoStartPlayers() && arena.getState() == ArenaState.WAITING) {
             startLobbyCountdown();
         } else {
             // Update scoreboard right away
@@ -138,6 +142,21 @@ public class GameSession {
         }
 
         return true;
+    }
+
+    /**
+     * Starts the countdown manually by a player using the Nether Star.
+     */
+    public void startLobbyCountdownManual(Player player) {
+        if (arena.getState() != ArenaState.WAITING) {
+            return;
+        }
+        if (players.size() < arena.getMinPlayers()) {
+            MessageUtils.sendMessage(player, "&cNot enough players.");
+            return;
+        }
+        broadcastMessage("&e" + player.getName() + " &a&lhas manually started the countdown!");
+        startLobbyCountdown();
     }
 
     /**

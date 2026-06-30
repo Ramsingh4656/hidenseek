@@ -1,6 +1,6 @@
 # HideNSeek Commands & Permissions
 
-This file documents all available commands and permission nodes for HideNSeek v1.0.1.
+This file documents all available commands and permission nodes for HideNSeek v1.0.2.
 
 ---
 
@@ -35,8 +35,23 @@ The plugin uses the base command `/hns` (or `/hidenseek`). Subcommands are restr
 * **Permission**: `hns.setup` (Default: `op`)
 
 #### `/hns setup <arena>`
-* **Description**: Toggles **Interactive Setup Mode** for the specified arena. Gives the player the Setup Hotbar to set spawns and regions without commands.
+* **Description**: Toggles **Interactive Setup Mode** and opens the visual Setup GUI for the specified arena. Gives the player the Setup Hotbar and the sidebar checklist.
 * **Usage**: `/hns setup <arena_name>`
+* **Permission**: `hns.setup` (Default: `op`)
+
+#### `/hns setlobbyboundary [arena]`
+* **Description**: Sets the Lobby Boundary of the arena to your current wand selection.
+* **Usage**: `/hns setlobbyboundary` or `/hns setlobbyboundary <arena_name>`
+* **Permission**: `hns.setup` (Default: `op`)
+
+#### `/hns sethiderboundary [arena]`
+* **Description**: Sets the Hider Boundary of the arena to your current wand selection.
+* **Usage**: `/hns sethiderboundary` or `/hns sethiderboundary <arena_name>`
+* **Permission**: `hns.setup` (Default: `op`)
+
+#### `/hns setseekerboundary [arena]`
+* **Description**: Sets the Seeker Boundary of the arena to your current wand selection.
+* **Usage**: `/hns setseekerboundary` or `/hns setseekerboundary <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 
 #### `/hns start <arena>`
@@ -50,7 +65,7 @@ The plugin uses the base command `/hns` (or `/hidenseek`). Subcommands are restr
 * **Permission**: `hns.stop` (Default: `op`)
 
 #### `/hns info <arena>`
-* **Description**: Prints a clean, colorized checklist and settings sheet showing the status of the arena.
+* **Description**: Prints a clean, colorized coordinate list, settings sheet, and setup checklist showing status details of the arena.
 * **Usage**: `/hns info <arena_name>`
 * **Permission**: `hns.setup` (Default: `op`)
 

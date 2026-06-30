@@ -6,10 +6,13 @@ HideNSeek is a highly customizable, production-ready, infection-style Hide and S
 
 ## Key Features
 - **Infection Game Flow**: Hiders become tiny (using Minecraft's native `GENERIC_SCALE`, no client resource pack required). Seekers search and tag them. Eliminated Hiders join the hunt!
-- **Interactive Setup Mode**: Command-free arena configurations! Run `/hns setup <arena>` to configure regions, spawns, and lobbies directly from your hotbar using clickable items.
-- **Auto Validation & Auto Enable**: Real-time checklists detect missing config elements. Arenas are auto-enabled and saved the second validation succeeds.
+- **Bedrock / Pocket Edition Compatibility**: Full native support for Bedrock players connecting through Geyser/Floodgate. All titles, action bars, bossbars, and inventory items work perfectly on mobile/Bedrock clients.
+- **Visual Setup GUI & Scoreboard Checklist**: Open a 27-slot chest GUI automatically when configuring. Real-time checkbox statuses are shown on a live scoreboard sidebar checklist as you configure.
+- **Three-Boundary System**: Configure separate bounding boxes for the Lobby, Seekers, and Hiders to enforce region rules during different game stages.
+- **Seeker Safe Area**: Spawns seekers in a configurable (e.g. 5x5) protection region that they cannot leave during the hiding countdown, preventing rushing.
+- **Manual & Automatic Matchmaking Starting**: Redesigned starts using a Nether Star item to start manually when minimum players are met (default 2), alongside a configurable automatic start threshold (default 8).
 - **Custom Bazooka Rocket Launcher**: Fired projectiles detonate on impact, dealing splash damage to Hiders with custom sound, flame, and smoke animations.
-- **Premium Display Aesthetics**: Integrated Chest Join GUI (using Map icons), custom Scoreboard sidebar, Boss Bar match timer, action bar countdowns, and full-screen color titles.
+- **Premium Display Aesthetics**: Integrated Chest Join GUI (using Map icons), custom team-based Scoreboard sidebar, Boss Bar match timer, action bar countdowns, and full-screen color titles.
 - **Inventory Caching & Restoration**: Stores players' inventories, levels, and flight states upon joining/setting up, restoring them safely on leave/quit.
 - **Multiverse Compatible**: Defer-loading ensures spawns and regions are loaded reliably even when worlds are loaded late on server startup.
 
@@ -23,7 +26,7 @@ HideNSeek is a highly customizable, production-ready, infection-style Hide and S
 ---
 
 ## Installation
-1. Put the compiled plugin jar (`HideNSeek-1.0.1.jar`) inside the server's `plugins/` folder.
+1. Put the compiled plugin jar (`HideNSeek-1.0.2.jar`) inside the server's `plugins/` folder.
 2. Start the Paper server.
 3. The plugin will automatically generate all necessary templates:
    - `plugins/HideNSeek/config.yml` - Gameplay parameters and weapons.
@@ -61,5 +64,5 @@ chmod +x gradlew
 
 The compiled plugin jar will be generated inside the output folder:
 ```text
-build/libs/HideNSeek-1.0.1.jar
+build/libs/HideNSeek-1.0.2.jar
 ```

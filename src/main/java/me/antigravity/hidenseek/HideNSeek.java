@@ -37,7 +37,7 @@ public final class HideNSeek extends JavaPlugin implements HideNSeekAPI {
     private GameService gameService;
     private SetupManager setupManager;
 
-    private ItemStack lobbyItemJoin;
+    private ItemStack lobbyItemStart;
     private ItemStack lobbyItemLeave;
 
     @Override
@@ -106,27 +106,27 @@ public final class HideNSeek extends JavaPlugin implements HideNSeekAPI {
      * Re-creates the Lobby Items when configurations are reloaded.
      */
     public void loadLobbyItems() {
-        // Load Join Nether Star Item
+        // Load Start Game Nether Star Item
         try {
-            Material joinMat = Material.valueOf(configManager.getConfig().getString("lobby-items.join-selector.material", "NETHER_STAR"));
-            ItemStack joinItem = new ItemStack(joinMat);
-            ItemMeta joinMeta = joinItem.getItemMeta();
-            if (joinMeta != null) {
-                String name = configManager.getConfig().getString("lobby-items.join-selector.name", "&a&lJoin Game &7(Right Click)");
-                joinMeta.displayName(MessageUtils.color(name));
+            Material startMat = Material.valueOf(configManager.getConfig().getString("lobby-items.start-game.material", "NETHER_STAR"));
+            ItemStack startItem = new ItemStack(startMat);
+            ItemMeta startMeta = startItem.getItemMeta();
+            if (startMeta != null) {
+                String name = configManager.getConfig().getString("lobby-items.start-game.name", "&a&lStart Game &7(Right Click)");
+                startMeta.displayName(MessageUtils.color(name));
                 
-                List<String> configLore = configManager.getConfig().getStringList("lobby-items.join-selector.lore");
+                List<String> configLore = configManager.getConfig().getStringList("lobby-items.start-game.lore");
                 List<Component> coloredLore = new ArrayList<>();
                 for (String line : configLore) {
                     coloredLore.add(MessageUtils.color(line));
                 }
-                joinMeta.lore(coloredLore);
-                joinItem.setItemMeta(joinMeta);
+                startMeta.lore(coloredLore);
+                startItem.setItemMeta(startMeta);
             }
-            this.lobbyItemJoin = joinItem;
+            this.lobbyItemStart = startItem;
         } catch (Exception e) {
-            getLogger().warning("Failed to load lobby join item from config: " + e.getMessage());
-            this.lobbyItemJoin = new ItemStack(Material.NETHER_STAR);
+            getLogger().warning("Failed to load lobby start item from config: " + e.getMessage());
+            this.lobbyItemStart = new ItemStack(Material.NETHER_STAR);
         }
 
         // Load Leave Barrier Item
@@ -221,8 +221,8 @@ public final class HideNSeek extends JavaPlugin implements HideNSeekAPI {
         return setupManager;
     }
 
-    public ItemStack getLobbyItemJoin() {
-        return lobbyItemJoin;
+    public ItemStack getLobbyItemStart() {
+        return lobbyItemStart;
     }
 
     public ItemStack getLobbyItemLeave() {

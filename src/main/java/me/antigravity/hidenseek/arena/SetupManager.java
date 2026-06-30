@@ -1,13 +1,17 @@
 package me.antigravity.hidenseek.arena;
 
 import me.antigravity.hidenseek.HideNSeek;
+import me.antigravity.hidenseek.gui.SetupGUI;
 import me.antigravity.hidenseek.utils.MessageUtils;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scoreboard.*;
 import net.kyori.adventure.text.Component;
 
 import java.util.*;
@@ -20,6 +24,8 @@ public class SetupManager {
 
     private final HideNSeek plugin;
     private final Map<UUID, SetupSession> sessions = new HashMap<>();
+    private final Map<UUID, Location[]> selections = new HashMap<>();
+    private final Map<UUID, Scoreboard> setupScoreboards = new HashMap<>();
 
     public SetupManager(HideNSeek plugin) {
         this.plugin = plugin;
@@ -31,6 +37,27 @@ public class SetupManager {
 
     public SetupSession getSession(Player player) {
         return sessions.get(player.getUniqueId());
+    }
+
+    // Temporary selection management
+    public Location getSelectionPos1(Player player) {
+        Location[] sel = selections.get(player.getUniqueId());
+        return sel != null ? sel[0] : null;
+    }
+
+    public void setSelectionPos1(Player player, Location loc) {
+        Location[] sel = selections.computeIfAbsent(player.getUniqueId(), k -> new Location[2]);
+        sel[0] = loc;
+    }
+
+    public Location getSelectionPos2(Player player) {
+        Location[] sel = selections.get(player.getUniqueId());
+        return sel != null ? sel[1] : null;
+    }
+
+    public void setSelectionPos2(Player player, Location loc) {
+        Location[] sel = selections.computeIfAbsent(player.getUniqueId(), k -> new Location[2]);
+        sel[1] = loc;
     }
 
     /**
@@ -55,6 +82,9 @@ public class SetupManager {
         MessageUtils.playSound(player, "ENTITY_EXPERIENCE_ORB_PICKUP", 1.0f, 1.0f);
         
         printChecklist(player, arena);
+        
+        // Open the setup visual GUI
+        new SetupGUI(plugin, arena).open(player);
     }
 
     /**
@@ -63,6 +93,12 @@ public class SetupManager {
     public void exitSetupMode(Player player, boolean restoreState) {
         UUID uuid = player.getUniqueId();
         SetupSession session = sessions.remove(uuid);
+        selections.remove(uuid);
+        
+        // Clean up setup scoreboard
+        setupScoreboards.remove(uuid);
+        player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+
         if (session == null) return;
 
         if (restoreState) {
@@ -73,10 +109,10 @@ public class SetupManager {
     }
 
     /**
-     * Gives the 6 clickable setup items to the player's hotbar.
+     * Gives the clickable setup items to the player's hotbar.
      */
     public void giveSetupHotbar(Player player) {
-        player.getInventory().setItem(0, createSetupItem(Material.BEACON, "&a&lSet Lobby &7(Right Click)", "&7Click to set the arena lobby spawn at your location."));
+        player.getInventory().setItem(0, createSetupItem(Material.BEACON, "&a&lSet Lobby Spawn &7(Right Click)", "&7Click to set the arena lobby spawn at your location."));
         player.getInventory().setItem(1, createSetupItem(Material.REDSTONE_TORCH, "&c&lSet Seeker Spawn &7(Right Click)", "&7Click to set the Seeker spawn at your location."));
         player.getInventory().setItem(2, createSetupItem(Material.EMERALD, "&a&lAdd Hider Spawn &7(Right Click)", "&7Click to add a Hider spawn point at your location."));
         player.getInventory().setItem(3, createSetupItem(Material.GOLDEN_AXE, "&6&lRegion Wand &7(Left/Right Click)", "&7Left-click block: Set Position 1\n&7Right-click block: Set Position 2"));
@@ -101,24 +137,83 @@ public class SetupManager {
     }
 
     /**
-     * Prints the visual setup checklist in the chat window.
+     * Prints the visual setup checklist in the chat window and updates scoreboard sidebar.
      */
     public void printChecklist(Player player, Arena arena) {
         boolean lobbySet = arena.getLobbySpawn() != null;
+        boolean lobbyBoundSet = arena.getLobbyPos1() != null && arena.getLobbyPos2() != null;
         boolean seekerSet = arena.getSeekerSpawn() != null;
+        boolean seekerBoundSet = arena.getSeekerPos1() != null && arena.getSeekerPos2() != null;
         boolean hidersSet = !arena.getHiderSpawns().isEmpty();
-        boolean regionSet = arena.getPos1() != null && arena.getPos2() != null;
-        boolean saved = arena.isEnabled() && arena.isConfigured();
+        boolean hiderBoundSet = arena.getHiderPos1() != null && arena.getHiderPos2() != null;
+        boolean saved = arena.isEnabled();
+        boolean finished = !isInSetupMode(player);
 
         MessageUtils.sendMessage(player, "&8&m========================================");
         MessageUtils.sendMessage(player, "    &6&lArena Setup Checklist: &e" + arena.getName());
         MessageUtils.sendMessage(player, "");
-        MessageUtils.sendMessage(player, (lobbySet ? "  &a✅ Lobby" : "  &c❌ Lobby &8(Need to set)"));
-        MessageUtils.sendMessage(player, (seekerSet ? "  &a✅ Seeker Spawn" : "  &c❌ Seeker Spawn &8(Need to set)"));
-        MessageUtils.sendMessage(player, (hidersSet ? "  &a✅ Hider Spawn &a(" + arena.getHiderSpawns().size() + ")" : "  &c❌ Hider Spawn &8(Need to add)"));
-        MessageUtils.sendMessage(player, (regionSet ? "  &a✅ Region" : "  &c❌ Region &8(Need to select bounds)"));
-        MessageUtils.sendMessage(player, (saved ? "  &a✅ Save & Status: &2Enabled" : "  &c❌ Save & Status: &cDisabled"));
+        MessageUtils.sendMessage(player, (lobbySet ? "  &a✔ &eLobby Spawn" : "  &c✖ &eLobby Spawn &8(Need to set)"));
+        MessageUtils.sendMessage(player, (lobbyBoundSet ? "  &a✔ &eLobby Boundary" : "  &c✖ &eLobby Boundary &8(Need to select bounds)"));
+        MessageUtils.sendMessage(player, (seekerSet ? "  &a✔ &eSeeker Spawn" : "  &c✖ &eSeeker Spawn &8(Need to set)"));
+        MessageUtils.sendMessage(player, (seekerBoundSet ? "  &a✔ &eSeeker Boundary" : "  &c✖ &eSeeker Boundary &8(Need to select bounds)"));
+        MessageUtils.sendMessage(player, (hidersSet ? "  &a✔ &eHider Spawns &a(" + arena.getHiderSpawns().size() + ")" : "  &c✖ &eHider Spawns &8(Need to add)"));
+        MessageUtils.sendMessage(player, (hiderBoundSet ? "  &a✔ &eHider Boundary" : "  &c✖ &eHider Boundary &8(Need to select bounds)"));
+        MessageUtils.sendMessage(player, (saved ? "  &a✔ &eSaved" : "  &c✖ &eSaved"));
+        MessageUtils.sendMessage(player, (finished ? "  &a✔ &eFinished" : "  &c✖ &eFinished"));
         MessageUtils.sendMessage(player, "&8&m========================================");
+
+        // Also update setup scoreboard
+        updateSetupScoreboard(player, arena);
+    }
+
+    public void updateSetupScoreboard(Player player, Arena arena) {
+        Scoreboard sb = setupScoreboards.computeIfAbsent(player.getUniqueId(), k -> Bukkit.getScoreboardManager().getNewScoreboard());
+        
+        Objective obj = sb.getObjective("hns_setup");
+        if (obj != null) {
+            obj.unregister();
+        }
+        obj = sb.registerNewObjective("hns_setup", Criteria.DUMMY, MessageUtils.color("&6&lSetup: &e" + arena.getName()));
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        try {
+            obj.numberFormat(NumberFormat.blank());
+        } catch (Throwable t) {}
+
+        boolean lobbySet = arena.getLobbySpawn() != null;
+        boolean lobbyBoundSet = arena.getLobbyPos1() != null && arena.getLobbyPos2() != null;
+        boolean seekerSet = arena.getSeekerSpawn() != null;
+        boolean seekerBoundSet = arena.getSeekerPos1() != null && arena.getSeekerPos2() != null;
+        boolean hidersSet = !arena.getHiderSpawns().isEmpty();
+        boolean hiderBoundSet = arena.getHiderPos1() != null && arena.getHiderPos2() != null;
+        boolean saved = arena.isEnabled();
+        boolean finished = !isInSetupMode(player);
+
+        List<String> lines = new ArrayList<>();
+        lines.add("&7---------------------");
+        lines.add((lobbySet ? "&a✔ &fLobby Spawn" : "&c✖ &fLobby Spawn"));
+        lines.add((lobbyBoundSet ? "&a✔ &fLobby Boundary" : "&c✖ &fLobby Boundary"));
+        lines.add((seekerSet ? "&a✔ &fSeeker Spawn" : "&c✖ &fSeeker Spawn"));
+        lines.add((seekerBoundSet ? "&a✔ &fSeeker Boundary" : "&c✖ &fSeeker Boundary"));
+        lines.add((hidersSet ? "&a✔ &fHider Spawns &a(" + arena.getHiderSpawns().size() + ")" : "&c✖ &fHider Spawns"));
+        lines.add((hiderBoundSet ? "&a✔ &fHider Boundary" : "&c✖ &fHider Boundary"));
+        lines.add((saved ? "&a✔ &fSaved" : "&c✖ &fSaved"));
+        lines.add((finished ? "&a✔ &fFinished" : "&c✖ &fFinished"));
+        lines.add("&7---------------------");
+
+        int score = lines.size();
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String entry = MessageUtils.colorLegacy(line + getInvisibleSuffix(i));
+            Score s = obj.getScore(entry);
+            s.setScore(score--);
+        }
+
+        player.setScoreboard(sb);
+    }
+
+    private String getInvisibleSuffix(int index) {
+        char colorChar = Integer.toHexString(index % 16).charAt(0);
+        return "§" + colorChar + "§r";
     }
 
     public static class SetupSession {
